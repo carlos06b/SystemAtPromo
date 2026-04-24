@@ -9,85 +9,81 @@ import java.sql.ResultSet;
 
 public class UserDAO {
 
-        //  salvar
-        public void save(User u) {
+    public void save(User u) {
 
-            String sql = "INSERT INTO user (name, email, password, jobTittle) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO user (name, email, password, jobTittle) VALUES (?, ?, ?, ?)";
 
-            try (Connection conn = ConnectionFactory.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-                stmt.setString(1, u.getName());
-                stmt.setString(2, u.getEmail());
-                stmt.setString(3, u.getPassword());
-                stmt.setString(4, u.getJobTittle());
+            stmt.setString(1, u.getName());
+            stmt.setString(2, u.getEmail());
+            stmt.setString(3, u.getPassword());
+            stmt.setString(4, u.getJobTittle());
 
-                stmt.executeUpdate();
+            stmt.executeUpdate();
 
-                System.out.println("Usuário cadastrado!");
+            System.out.println("Usuário cadastrado com sucesso!");
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+    }
 
-        // buscar por email
-        public User findByEmail(String email) {
+    public User findByEmail(String email) {
 
-            String sql = "SELECT * FROM user WHERE email = ?";
+        String sql = "SELECT * FROM user WHERE email = ?";
 
-            try (Connection conn = ConnectionFactory.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-                stmt.setString(1, email);
+            stmt.setString(1, email);
 
-                ResultSet rs = stmt.executeQuery();
+            ResultSet rs = stmt.executeQuery();
 
-                if (rs.next()) {
-                    return new User(
-                            rs.getInt("iduser"),
-                            rs.getString("email"),
-                            rs.getString("jobTittle"),
-                            rs.getString("name"),
-                            rs.getString("password")
-                    );
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (rs.next()) {
+                return new User(
+                        rs.getInt("iduser"),
+                        rs.getString("email"),
+                        rs.getString("jobTittle"), // ✔ corrigido
+                        rs.getString("name"),
+                        rs.getString("password")
+                );
             }
 
-            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        // login
-        public User login(String email, String password) {
+        return null;
+    }
 
-            String sql = "SELECT * FROM user WHERE email = ? AND password = ?";
+    public User login(String email, String password) {
 
-            try (Connection conn = ConnectionFactory.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+        String sql = "SELECT * FROM user WHERE email = ? AND password = ?";
 
-                stmt.setString(1, email);
-                stmt.setString(2, password);
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-                ResultSet rs = stmt.executeQuery();
+            stmt.setString(1, email);
+            stmt.setString(2, password);
 
-                if (rs.next()) {
-                    return new User(
-                            rs.getInt("iduser"),
-                            rs.getString("email"),
-                            rs.getString("jobTittle"),
-                            rs.getString("name"),
-                            rs.getString("password")
-                    );
-                }
+            ResultSet rs = stmt.executeQuery();
 
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (rs.next()) {
+                return new User(
+                        rs.getInt("iduser"),
+                        rs.getString("email"),
+                        rs.getString("jobTittle"), // ✔ corrigido
+                        rs.getString("name"),
+                        rs.getString("password")
+                );
             }
 
-            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+
+        return null;
+    }
 }
-

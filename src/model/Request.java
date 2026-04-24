@@ -1,5 +1,6 @@
 package model;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class Request {
@@ -10,16 +11,39 @@ public class Request {
         private String message;
         private String status;
         private LocalDateTime date;
+        private String type;
+        private BigDecimal amount;
 
-        public Request(int id, LocalDateTime date, int id_Promoter, int id_UserFin, int id_UserRH, String message, String status) {
-            this.id = id;
-            this.date = date;
-            this.id_Promoter = id_Promoter;
-            this.id_UserFin = id_UserFin;
-            this.id_UserRH = id_UserRH;
-            this.message = message;
-            this.status = status;
-        }
+    public Request(int id, int id_UserRH, int id_UserFin, int id_Promoter, String type, BigDecimal amount, String message, String status, LocalDateTime date) {
+        this.id = id;
+        this.id_UserRH = id_UserRH;
+        this.id_UserFin = id_UserFin;
+        this.id_Promoter = id_Promoter;
+        this.type = type;
+        this.amount = amount;
+        this.message = message;
+        this.status = status;
+        this.date = date;
+    }
+
+    public Request() {
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
 
         public int getId() {
         return id;
