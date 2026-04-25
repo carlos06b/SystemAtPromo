@@ -4,58 +4,135 @@ import database.ConnectionFactory;
 import model.FinancePromoter;
 
 import java.math.BigDecimal;
-import java.sql.*;
-import java.sql.Date;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class FinancePromoterDAO {
 
-    public void save(FinancePromoter f) {
+    public void save(FinancePromoter finance) {
 
-        String sql = "INSERT INTO finance_promoter (id_promoter, type, amount, date, status) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO finance_promoter (id_promoter, type, amount, date, status) " +
+                "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, f.getIdPromoter());
-            stmt.setString(2, f.getType());
-            stmt.setBigDecimal(3, f.getAmount());
-            stmt.setDate(4, Date.valueOf(f.getDate()));
-            stmt.setString(5, f.getStatus());
+            stmt.setInt(1, finance.getIdPromoter());
+            stmt.setString(2, finance.getType());
+            stmt.setBigDecimal(3, finance.getAmount());
+            stmt.setDate(4, java.sql.Date.valueOf(finance.getDate()));
+            stmt.setString(5, finance.getStatus());
 
             stmt.executeUpdate();
 
-            System.out.println("Registro financeiro salvo!");
+            System.out.println("Lançamento financeiro cadastrado com sucesso!");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public List<String> findByPeriodWithPromoterName(LocalDate start, LocalDate end) {
+    public List<FinancePromoter> findAll() {
 
-        List<String> list = new ArrayList<>();
+        List<FinancePromoter> list = new ArrayList<>();
 
-        String sql = "SELECT fp.id, p.name, fp.type, fp.amount, fp.date, fp.status " +
-                "FROM finance_promoter fp " +
-                "JOIN promoter p ON fp.id_promoter = p.idpromoter " +
-                "WHERE fp.date BETWEEN ? AND ? " +
-                "ORDER BY fp.date";
+        String sql = "SELECT * FROM finance_promoter";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(buildFinancePromoter(rs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<FinancePromoter> findByPeriod(LocalDate start, LocalDate end) {
+
+        List<FinancePromoter> list = new ArrayList<>();
+
+        String sql = "SELECT * FROM finance_promoter WHERE date BETWEEN ? AND ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDate(1, Date.valueOf(start));
-            stmt.setDate(2, Date.valueOf(end));
+            stmt.setDate(1, java.sql.Date.valueOf(start));
+            stmt.setDate(2, java.sql.Date.valueOf(end));
 
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
+                list.add(buildFinancePromoter(rs));
+            }
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<FinancePromoter> findByPromoterAndPeriod(int idPromoter, LocalDate start, LocalDate end) {
+
+        List<FinancePromoter> list = new ArrayList<>();
+
+        String sql = "SELECT * FROM finance_promoter " +
+                "WHERE id_promoter = ? AND date BETWEEN ? AND ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idPromoter);
+            stmt.setDate(2, java.sql.Date.valueOf(start));
+            stmt.setDate(3, java.sql.Date.valueOf(end));
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(buildFinancePromoter(rs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<String> findByPeriodWithPromoterName(LocalDate start, LocalDate end) {
+
+        List<String> list = new ArrayList<>();
+
+        String sql = "SELECT fp.id, p.name AS promoter_name, fp.type, fp.amount, fp.date, fp.status " +
+                "FROM finance_promoter fp " +
+                "JOIN promoter p ON fp.id_promoter = p.idpromoter " +
+                "WHERE fp.date BETWEEN ? AND ? " +
+                "ORDER BY fp.date DESC";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, java.sql.Date.valueOf(start));
+            stmt.setDate(2, java.sql.Date.valueOf(end));
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
                 String line =
                         rs.getInt("id") + " | " +
-                                rs.getString("name") + " | " +
+                                "Promotor: " + rs.getString("promoter_name") + " | " +
                                 rs.getString("type") + " | " +
                                 "R$ " + rs.getBigDecimal("amount") + " | " +
                                 rs.getDate("date").toLocalDate() + " | " +
@@ -73,42 +150,42 @@ public class FinancePromoterDAO {
 
     public BigDecimal getTotalByPeriod(LocalDate start, LocalDate end) {
 
-        BigDecimal total = BigDecimal.ZERO;
-
         String sql = "SELECT SUM(amount) AS total FROM finance_promoter WHERE date BETWEEN ? AND ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDate(1, Date.valueOf(start));
-            stmt.setDate(2, Date.valueOf(end));
+            stmt.setDate(1, java.sql.Date.valueOf(start));
+            stmt.setDate(2, java.sql.Date.valueOf(end));
 
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
-                total = rs.getBigDecimal("total");
-                if (total == null) total = BigDecimal.ZERO;
+                BigDecimal total = rs.getBigDecimal("total");
+                return total != null ? total : BigDecimal.ZERO;
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return total;
+        return BigDecimal.ZERO;
     }
 
     public Map<String, BigDecimal> getTotalByTypeAndPeriod(LocalDate start, LocalDate end) {
 
-        Map<String, BigDecimal> totals = new LinkedHashMap<>();
+        Map<String, BigDecimal> totals = new HashMap<>();
 
-        String sql = "SELECT type, SUM(amount) AS total FROM finance_promoter " +
-                "WHERE date BETWEEN ? AND ? GROUP BY type";
+        String sql = "SELECT type, SUM(amount) AS total " +
+                "FROM finance_promoter " +
+                "WHERE date BETWEEN ? AND ? " +
+                "GROUP BY type";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDate(1, Date.valueOf(start));
-            stmt.setDate(2, Date.valueOf(end));
+            stmt.setDate(1, java.sql.Date.valueOf(start));
+            stmt.setDate(2, java.sql.Date.valueOf(end));
 
             ResultSet rs = stmt.executeQuery();
 
@@ -121,5 +198,19 @@ public class FinancePromoterDAO {
         }
 
         return totals;
+    }
+
+    private FinancePromoter buildFinancePromoter(ResultSet rs) throws Exception {
+
+        FinancePromoter finance = new FinancePromoter();
+
+        finance.setId(rs.getInt("id"));
+        finance.setIdPromoter(rs.getInt("id_promoter"));
+        finance.setType(rs.getString("type"));
+        finance.setAmount(rs.getBigDecimal("amount"));
+        finance.setDate(rs.getDate("date").toLocalDate());
+        finance.setStatus(rs.getString("status"));
+
+        return finance;
     }
 }

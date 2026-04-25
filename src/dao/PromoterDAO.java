@@ -66,6 +66,30 @@ public class PromoterDAO {
         return list;
     }
 
+    public List<Promoter> findByType(String type) {
+
+        List<Promoter> list = new ArrayList<>();
+
+        String sql = "SELECT * FROM promoter WHERE type = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, type);
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(buildPromoter(rs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
     public Promoter findById(int id) {
 
         String sql = "SELECT * FROM promoter WHERE idpromoter = ?";
@@ -108,6 +132,30 @@ public class PromoterDAO {
         }
 
         return null;
+    }
+
+    public List<Promoter> findByName(String name) {
+
+        List<Promoter> list = new ArrayList<>();
+
+        String sql = "SELECT * FROM promoter WHERE name LIKE ? AND active = true";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, "%" + name + "%");
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(buildPromoter(rs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
     }
 
     public void update(Promoter promoter) {
@@ -161,6 +209,8 @@ public class PromoterDAO {
             e.printStackTrace();
         }
     }
+
+
 
     private Promoter buildPromoter(ResultSet rs) throws Exception {
 

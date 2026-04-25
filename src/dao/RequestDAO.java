@@ -22,7 +22,11 @@ public class RequestDAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, request.getId_UserRH());
-            stmt.setInt(2, request.getId_UserFin());
+            if (request.getId_UserFin() <= 0) {
+                stmt.setNull(2, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(2, request.getId_UserFin());
+            }
             stmt.setInt(3, request.getId_Promoter());
             stmt.setString(4, request.getType());
             stmt.setBigDecimal(5, request.getAmount());
@@ -247,6 +251,23 @@ public class RequestDAO {
         r.setDate(rs.getTimestamp("date").toLocalDateTime());
 
         return r;
+    }
+
+    public void updateFinanceUser(int id, int idUserFin) {
+
+        String sql = "UPDATE request SET id_userFIN = ? WHERE id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, idUserFin);
+            stmt.setInt(2, id);
+
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private String buildRequestLineWithPromoterName(ResultSet rs) throws Exception {

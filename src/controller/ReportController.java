@@ -6,6 +6,7 @@ import dao.VariableExpenseDAO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 public class ReportController {
 
@@ -29,12 +30,17 @@ public class ReportController {
                 .add(variableTotal);
 
         System.out.println("\n=== RELATÓRIO GERAL DA EMPRESA ===");
-        System.out.println("Período: " + start + " até " + end);
+        System.out.println("Período: " + formatDate(start) + " até " + formatDate(end));
         System.out.println("----------------------------------");
         System.out.println("Financeiro dos promotores: R$ " + promoterTotal);
         System.out.println("Despesas fixas mensais:    R$ " + fixedTotal);
         System.out.println("Despesas variáveis:        R$ " + variableTotal);
         System.out.println("----------------------------------");
         System.out.println("TOTAL GERAL:               R$ " + total);
+    }
+
+    private String formatDate(LocalDate date) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        return date.format(formatter);
     }
 }

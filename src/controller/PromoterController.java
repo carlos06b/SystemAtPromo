@@ -58,21 +58,46 @@ public class PromoterController {
         }
 
         for (Promoter p : list) {
-            printPromoter(p);
+            System.out.println(
+                    p.getId() + " | " +
+                            p.getName() + " | " +
+                            p.getCpf() + " | " +
+                            p.getPhone() + " | " +
+                            p.getType() + " | " +
+                            p.getSalary() + " | " +
+                            (p.isActive() ? "ATIVO" : "INATIVO")
+            );
         }
     }
 
-    public void findById(int id) {
+    public List<Promoter> getAll() {
+        return promoterDAO.findAll();
+    }
 
-        Promoter p = promoterDAO.findById(id);
+    public List<Promoter> getByType(String type) {
 
-        if (p == null) {
-            System.out.println("Promotor não encontrado.");
-            return;
+        if (!type.equalsIgnoreCase("CLT") && !type.equalsIgnoreCase("MEI")) {
+            return List.of();
         }
 
-        printPromoter(p);
+        return promoterDAO.findByType(type.toUpperCase());
     }
+
+
+
+    public Promoter findById(int id) {
+        return promoterDAO.findById(id);
+    }
+
+    public List<Promoter> searchByName(String name) {
+        if (name == null || name.isBlank()) {
+            return List.of();
+        }
+
+        return promoterDAO.findByName(name.trim());
+    }
+
+
 
     public void update(int id, String name, String phone, BigDecimal salary, String type) {
 
@@ -84,7 +109,7 @@ public class PromoterController {
         }
 
         if (!type.equalsIgnoreCase("CLT") && !type.equalsIgnoreCase("MEI")) {
-            System.out.println("Tipo inválido. Use CLT ou MEI.");
+            System.out.println("Tipo inválido.");
             return;
         }
 
@@ -94,6 +119,8 @@ public class PromoterController {
         p.setType(type.toUpperCase());
 
         promoterDAO.update(p);
+
+        System.out.println("Promotor atualizado com sucesso!");
     }
 
     public void inactivate(int id) {
@@ -105,32 +132,34 @@ public class PromoterController {
             return;
         }
 
-        promoterDAO.inactivate(id);
+        p.setActive(false);
+
+        promoterDAO.update(p);
+
+        System.out.println("Promotor inativado!");
     }
 
-    private void printPromoter(Promoter p) {
+    public void activate(int id) {
 
-        System.out.println(
-                p.getId() + " | " +
-                        p.getName() + " | " +
-                        "CPF: " + p.getCpf() + " | " +
-                        "Telefone: " + p.getPhone() + " | " +
-                        "Nascimento: " + p.getDateBirth() + " | " +
-                        "Salário: R$ " + p.getSalary() + " | " +
-                        "Tipo: " + p.getType() + " | " +
-                        (p.isActive() ? "ATIVO" : "INATIVO")
-        );
+        Promoter p = promoterDAO.findById(id);
+
+        if (p == null) {
+            System.out.println("Promotor não encontrado.");
+            return;
+        }
+
+        p.setActive(true);
+
+        promoterDAO.update(p);
+
+        System.out.println("Promotor ativado!");
     }
 
     private boolean isValidCpf(String cpf) {
 
-        if (cpf.length() != 11) {
-            return false;
-        }
+        if (cpf.length() != 11) return false;
 
-        if (cpf.matches("(\\d)\\1{10}")) {
-            return false;
-        }
+        if (cpf.matches("(\\d)\\1{10}")) return false;
 
         int sum = 0;
 
@@ -139,10 +168,7 @@ public class PromoterController {
         }
 
         int firstDigit = 11 - (sum % 11);
-
-        if (firstDigit >= 10) {
-            firstDigit = 0;
-        }
+        if (firstDigit >= 10) firstDigit = 0;
 
         if (firstDigit != Character.getNumericValue(cpf.charAt(9))) {
             return false;
@@ -155,10 +181,7 @@ public class PromoterController {
         }
 
         int secondDigit = 11 - (sum % 11);
-
-        if (secondDigit >= 10) {
-            secondDigit = 0;
-        }
+        if (secondDigit >= 10) secondDigit = 0;
 
         return secondDigit == Character.getNumericValue(cpf.charAt(10));
     }

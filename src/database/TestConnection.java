@@ -1,4 +1,5 @@
-import database.ConnectionFactory;
+package database;
+
 import java.sql.Connection;
 
 public class TestConnection {

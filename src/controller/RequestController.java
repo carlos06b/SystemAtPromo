@@ -24,12 +24,27 @@ public class RequestController {
             return;
         }
 
+        if (!isValidType(type)) {
+            System.out.println("Tipo de solicitação inválido.");
+            return;
+        }
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            System.out.println("Valor inválido.");
+            return;
+        }
+
+        if (message == null || message.isBlank()) {
+            System.out.println("Mensagem não pode ficar vazia.");
+            return;
+        }
+
         Request request = new Request();
 
         request.setId_UserRH(idUserRH);
         request.setId_UserFin(idUserFin);
         request.setId_Promoter(idPromoter);
-        request.setType(type);
+        request.setType(type.toUpperCase());
         request.setAmount(amount);
         request.setMessage(message);
         request.setStatus("PENDENTE");
@@ -66,6 +81,10 @@ public class RequestController {
         }
     }
 
+    public List<String> getAllWithPromoterName() {
+        return requestDAO.findAllWithPromoterName();
+    }
+
     public void listPendingWithPromoterName() {
 
         List<String> list = requestDAO.findPendingWithPromoterName();
@@ -78,6 +97,10 @@ public class RequestController {
         for (String line : list) {
             System.out.println(line);
         }
+    }
+
+    public List<String> getPendingWithPromoterName() {
+        return requestDAO.findPendingWithPromoterName();
     }
 
     public void listByStatus(String status) {
@@ -108,7 +131,15 @@ public class RequestController {
         }
     }
 
+    public List<String> getByPeriodWithPromoterName(LocalDateTime start, LocalDateTime end) {
+        return requestDAO.findByPeriodWithPromoterName(start, end);
+    }
+
     public void approve(int id) {
+        approve(id, 0);
+    }
+
+    public void approve(int id, int idUserFin) {
 
         List<Request> list = requestDAO.findAll();
 
@@ -124,6 +155,10 @@ public class RequestController {
                 if (promoterDAO.findById(r.getId_Promoter()) == null) {
                     System.out.println("Erro: promotor não existe mais.");
                     return;
+                }
+
+                if (idUserFin > 0) {
+                    requestDAO.updateFinanceUser(id, idUserFin);
                 }
 
                 requestDAO.updateStatus(id, "APROVADO");
@@ -171,6 +206,17 @@ public class RequestController {
 
     public void delete(int id) {
         requestDAO.delete(id);
+    }
+
+    private boolean isValidType(String type) {
+
+        if (type == null) return false;
+
+        return type.equalsIgnoreCase("BONIFICACAO") ||
+                type.equalsIgnoreCase("AJUDA_CUSTO") ||
+                type.equalsIgnoreCase("DESCONTO") ||
+                type.equalsIgnoreCase("ASO") ||
+                type.equalsIgnoreCase("EPI");
     }
 
     private void printRequest(Request r) {
