@@ -1,11 +1,12 @@
 package model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class FixedExpense {
     private int id;
     private String name;
-    private double amount;
+    private BigDecimal amount;
     private LocalDate dueDate;
     private boolean status;
     private LocalDate paymentDate;
@@ -16,11 +17,11 @@ public class FixedExpense {
         return id;
     }
 
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class Promoter {
+
     private int id;
     private String name;
     private String cpf;
@@ -11,9 +12,21 @@ public class Promoter {
     private LocalDate dateBirth;
     private boolean active;
     private BigDecimal salary;
+    private String type; // CLT ou MEI
 
     public Promoter() {
+    }
 
+    public Promoter(int id, String name, String cpf, String phone, LocalDate dateBirth,
+                    boolean active, BigDecimal salary, String type) {
+        this.id = id;
+        this.name = name;
+        this.cpf = cpf;
+        this.phone = phone;
+        this.dateBirth = dateBirth;
+        this.active = active;
+        this.salary = salary;
+        this.type = type;
     }
 
     public int getId() {
@@ -24,29 +37,6 @@ public class Promoter {
         this.id = id;
     }
 
-    public LocalDate getDateBirth() {
-        return dateBirth;
-    }
-
-    public void setDateBirth(LocalDate dateBirth) {
-        this.dateBirth = dateBirth;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public String getCpf() {
-        return cpf;
-    }
-
-    public void setCpf(String cpf) {
-        this.cpf = cpf;
-    }
 
     public String getName() {
         return name;
@@ -56,6 +46,16 @@ public class Promoter {
         this.name = name;
     }
 
+
+    public String getCpf() {
+        return cpf;
+    }
+
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
+    }
+
+
     public String getPhone() {
         return phone;
     }
@@ -64,11 +64,39 @@ public class Promoter {
         this.phone = phone;
     }
 
+
+    public LocalDate getDateBirth() {
+        return dateBirth;
+    }
+
+    public void setDateBirth(LocalDate dateBirth) {
+        this.dateBirth = dateBirth;
+    }
+
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+
     public BigDecimal getSalary() {
         return salary;
     }
 
     public void setSalary(BigDecimal salary) {
         this.salary = salary;
+    }
+
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }

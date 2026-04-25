@@ -1,62 +1,42 @@
 package model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class VariableExpense {
+
     private int id;
     private String name;
-    private double amount;
+    private BigDecimal amount;
     private int idPromoter;
     private LocalDate date;
     private boolean status;
+    private LocalDate paymentDate;
+    private String description;
 
     public VariableExpense() {}
 
-    public int getId() {
-        return id;
-    }
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
-    public double getAmount() {
-        return amount;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 
-    public LocalDate getDate() {
-        return date;
-    }
+    public int getIdPromoter() { return idPromoter; }
+    public void setIdPromoter(int idPromoter) { this.idPromoter = idPromoter; }
 
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
+    public LocalDate getDate() { return date; }
+    public void setDate(LocalDate date) { this.date = date; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public boolean isStatus() { return status; }
+    public void setStatus(boolean status) { this.status = status; }
 
-    public int getIdPromoter() {
-        return idPromoter;
-    }
+    public LocalDate getPaymentDate() { return paymentDate; }
+    public void setPaymentDate(LocalDate paymentDate) { this.paymentDate = paymentDate; }
 
-    public void setIdPromoter(int idPromoter) {
-        this.idPromoter = idPromoter;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public boolean isStatus() {
-        return status;
-    }
-
-    public void setStatus(boolean status) {
-        this.status = status;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }

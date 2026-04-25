@@ -3,7 +3,10 @@ package dao;
 import database.ConnectionFactory;
 import model.Promoter;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,7 +14,8 @@ public class PromoterDAO {
 
     public int save(Promoter promoter) {
 
-        String sql = "INSERT INTO promoter (name, cpf, phone, date_birth, active, salary) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO promoter (name, cpf, phone, date_birth, active, salary, type) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -19,13 +23,13 @@ public class PromoterDAO {
             stmt.setString(1, promoter.getName());
             stmt.setString(2, promoter.getCpf());
             stmt.setString(3, promoter.getPhone());
-            stmt.setDate(4, Date.valueOf(promoter.getDateBirth()));
+            stmt.setDate(4, java.sql.Date.valueOf(promoter.getDateBirth()));
             stmt.setBoolean(5, promoter.isActive());
             stmt.setBigDecimal(6, promoter.getSalary());
+            stmt.setString(7, promoter.getType());
 
             stmt.executeUpdate();
 
-            // pegar ID gerado pelo MySQL
             ResultSet rs = stmt.getGeneratedKeys();
 
             if (rs.next()) {
@@ -34,7 +38,7 @@ public class PromoterDAO {
                 return id;
             }
 
-        } catch (SQLException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -52,18 +56,7 @@ public class PromoterDAO {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-
-                Promoter p = new Promoter();
-
-                p.setId(rs.getInt("idpromoter"));
-                p.setName(rs.getString("name"));
-                p.setCpf(rs.getString("cpf"));
-                p.setPhone(rs.getString("phone"));
-                p.setDateBirth(rs.getDate("date_birth").toLocalDate());
-                p.setActive(rs.getBoolean("active"));
-                p.setSalary(rs.getBigDecimal("salary"));
-
-                list.add(p);
+                list.add(buildPromoter(rs));
             }
 
         } catch (Exception e) {
@@ -85,18 +78,29 @@ public class PromoterDAO {
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next()) {
+                return buildPromoter(rs);
+            }
 
-                Promoter p = new Promoter();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-                p.setId(rs.getInt("idpromoter"));
-                p.setName(rs.getString("name"));
-                p.setCpf(rs.getString("cpf"));
-                p.setPhone(rs.getString("phone"));
-                p.setDateBirth(rs.getDate("date_birth").toLocalDate());
-                p.setActive(rs.getBoolean("active"));
-                p.setSalary(rs.getBigDecimal("salary"));
+        return null;
+    }
 
-                return p;
+    public Promoter findByCpf(String cpf) {
+
+        String sql = "SELECT * FROM promoter WHERE cpf = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, cpf);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return buildPromoter(rs);
             }
 
         } catch (Exception e) {
@@ -108,7 +112,8 @@ public class PromoterDAO {
 
     public void update(Promoter promoter) {
 
-        String sql = "UPDATE promoter SET name = ?, cpf = ?, phone = ?, date_birth = ?, active = ?, salary = ? WHERE idpromoter = ?";
+        String sql = "UPDATE promoter SET name = ?, cpf = ?, phone = ?, date_birth = ?, active = ?, salary = ?, type = ? " +
+                "WHERE idpromoter = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -119,45 +124,57 @@ public class PromoterDAO {
             stmt.setDate(4, java.sql.Date.valueOf(promoter.getDateBirth()));
             stmt.setBoolean(5, promoter.isActive());
             stmt.setBigDecimal(6, promoter.getSalary());
-            stmt.setInt(7, promoter.getId());
+            stmt.setString(7, promoter.getType());
+            stmt.setInt(8, promoter.getId());
 
-            stmt.executeUpdate();
+            int rows = stmt.executeUpdate();
 
-            System.out.println("Promotor atualizado com sucesso!");
+            if (rows > 0) {
+                System.out.println("Promotor atualizado com sucesso!");
+            } else {
+                System.out.println("Promotor não encontrado.");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void delete(int id) {
+    public void inactivate(int id) {
 
-        String checkSql = "SELECT idpromoter FROM promoter WHERE idpromoter = ?";
-        String deleteSql = "DELETE FROM promoter WHERE idpromoter = ?";
+        String sql = "UPDATE promoter SET active = false WHERE idpromoter = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement checkStmt = conn.prepareStatement(checkSql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            // verificar se existe
-            checkStmt.setInt(1, id);
-            ResultSet rs = checkStmt.executeQuery();
+            stmt.setInt(1, id);
 
-            if (!rs.next()) {
-                System.out.println("Promotor não encontrado!");
-                return;
-            }
+            int rows = stmt.executeUpdate();
 
-            // deletar
-            try (PreparedStatement deleteStmt = conn.prepareStatement(deleteSql)) {
-
-                deleteStmt.setInt(1, id);
-                deleteStmt.executeUpdate();
-
-                System.out.println("Promotor excluído com sucesso!");
+            if (rows > 0) {
+                System.out.println("Promotor inativado com sucesso!");
+            } else {
+                System.out.println("Promotor não encontrado.");
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private Promoter buildPromoter(ResultSet rs) throws Exception {
+
+        Promoter p = new Promoter();
+
+        p.setId(rs.getInt("idpromoter"));
+        p.setName(rs.getString("name"));
+        p.setCpf(rs.getString("cpf"));
+        p.setPhone(rs.getString("phone"));
+        p.setDateBirth(rs.getDate("date_birth").toLocalDate());
+        p.setActive(rs.getBoolean("active"));
+        p.setSalary(rs.getBigDecimal("salary"));
+        p.setType(rs.getString("type"));
+
+        return p;
     }
 }

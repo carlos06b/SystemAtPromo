@@ -50,8 +50,7 @@ public class RequestDAO {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                Request r = buildRequest(rs);
-                list.add(r);
+                list.add(buildRequest(rs));
             }
 
         } catch (Exception e) {
@@ -75,8 +74,7 @@ public class RequestDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                Request r = buildRequest(rs);
-                list.add(r);
+                list.add(buildRequest(rs));
             }
 
         } catch (Exception e) {
@@ -101,8 +99,7 @@ public class RequestDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                Request r = buildRequest(rs);
-                list.add(r);
+                list.add(buildRequest(rs));
             }
 
         } catch (Exception e) {
@@ -116,26 +113,71 @@ public class RequestDAO {
 
         List<String> list = new ArrayList<>();
 
-        String sql = "SELECT r.id, p.name, r.type, r.amount, r.message, r.status, r.date " +
+        String sql = "SELECT r.id, p.name AS promoter_name, r.type, r.amount, r.message, r.status, r.date " +
                 "FROM request r " +
-                "JOIN promoter p ON r.id_promoter = p.idpromoter";
+                "JOIN promoter p ON r.id_promoter = p.idpromoter " +
+                "ORDER BY r.date DESC";
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
+                list.add(buildRequestLineWithPromoterName(rs));
+            }
 
-                String line =
-                        rs.getInt("id") + " | " +
-                                "Promotor: " + rs.getString("name") + " | " +
-                                rs.getString("type") + " | " +
-                                "R$ " + rs.getBigDecimal("amount") + " | " +
-                                rs.getString("message") + " | " +
-                                rs.getString("status") + " | " +
-                                rs.getTimestamp("date").toLocalDateTime();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-                list.add(line);
+        return list;
+    }
+
+    public List<String> findPendingWithPromoterName() {
+
+        List<String> list = new ArrayList<>();
+
+        String sql = "SELECT r.id, p.name AS promoter_name, r.type, r.amount, r.message, r.status, r.date " +
+                "FROM request r " +
+                "JOIN promoter p ON r.id_promoter = p.idpromoter " +
+                "WHERE r.status = 'PENDENTE' " +
+                "ORDER BY r.date DESC";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                list.add(buildRequestLineWithPromoterName(rs));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return list;
+    }
+
+    public List<String> findByPeriodWithPromoterName(LocalDateTime start, LocalDateTime end) {
+
+        List<String> list = new ArrayList<>();
+
+        String sql = "SELECT r.id, p.name AS promoter_name, r.type, r.amount, r.message, r.status, r.date " +
+                "FROM request r " +
+                "JOIN promoter p ON r.id_promoter = p.idpromoter " +
+                "WHERE r.date BETWEEN ? AND ? " +
+                "ORDER BY r.date DESC";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setTimestamp(1, Timestamp.valueOf(start));
+            stmt.setTimestamp(2, Timestamp.valueOf(end));
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                list.add(buildRequestLineWithPromoterName(rs));
             }
 
         } catch (Exception e) {
@@ -205,5 +247,16 @@ public class RequestDAO {
         r.setDate(rs.getTimestamp("date").toLocalDateTime());
 
         return r;
+    }
+
+    private String buildRequestLineWithPromoterName(ResultSet rs) throws Exception {
+
+        return rs.getInt("id") + " | " +
+                "Promotor: " + rs.getString("promoter_name") + " | " +
+                rs.getString("type") + " | " +
+                "R$ " + rs.getBigDecimal("amount") + " | " +
+                rs.getString("message") + " | " +
+                rs.getString("status") + " | " +
+                rs.getTimestamp("date").toLocalDateTime();
     }
 }

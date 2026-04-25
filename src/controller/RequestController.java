@@ -47,7 +47,9 @@ public class RequestController {
             return;
         }
 
-        printRequests(list);
+        for (Request r : list) {
+            printRequest(r);
+        }
     }
 
     public void listAllWithPromoterName() {
@@ -56,6 +58,20 @@ public class RequestController {
 
         if (list.isEmpty()) {
             System.out.println("Nenhuma solicitação encontrada.");
+            return;
+        }
+
+        for (String line : list) {
+            System.out.println(line);
+        }
+    }
+
+    public void listPendingWithPromoterName() {
+
+        List<String> list = requestDAO.findPendingWithPromoterName();
+
+        if (list.isEmpty()) {
+            System.out.println("Nenhuma solicitação pendente.");
             return;
         }
 
@@ -73,19 +89,23 @@ public class RequestController {
             return;
         }
 
-        printRequests(list);
+        for (Request r : list) {
+            printRequest(r);
+        }
     }
 
     public void listByPeriod(LocalDateTime start, LocalDateTime end) {
 
-        List<Request> list = requestDAO.findByPeriod(start, end);
+        List<String> list = requestDAO.findByPeriodWithPromoterName(start, end);
 
         if (list.isEmpty()) {
             System.out.println("Nenhuma solicitação nesse período.");
             return;
         }
 
-        printRequests(list);
+        for (String line : list) {
+            System.out.println(line);
+        }
     }
 
     public void approve(int id) {
@@ -153,18 +173,15 @@ public class RequestController {
         requestDAO.delete(id);
     }
 
-    private void printRequests(List<Request> list) {
-
-        for (Request r : list) {
-            System.out.println(
-                    r.getId() + " | " +
-                            "Promotor: " + r.getId_Promoter() + " | " +
-                            r.getType() + " | " +
-                            "R$ " + r.getAmount() + " | " +
-                            r.getMessage() + " | " +
-                            r.getStatus() + " | " +
-                            r.getDate()
-            );
-        }
+    private void printRequest(Request r) {
+        System.out.println(
+                r.getId() + " | " +
+                        "Promotor: " + r.getId_Promoter() + " | " +
+                        r.getType() + " | " +
+                        "R$ " + r.getAmount() + " | " +
+                        r.getMessage() + " | " +
+                        r.getStatus() + " | " +
+                        r.getDate()
+        );
     }
 }
