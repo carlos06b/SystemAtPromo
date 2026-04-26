@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -133,9 +134,9 @@ public class FinancePromoterDAO {
                 String line =
                         rs.getInt("id") + " | " +
                                 "Promotor: " + rs.getString("promoter_name") + " | " +
-                                rs.getString("type") + " | " +
+                                formatType(rs.getString("type")) + " | " +
                                 "R$ " + rs.getBigDecimal("amount") + " | " +
-                                rs.getDate("date").toLocalDate() + " | " +
+                                formatDate(rs.getDate("date").toLocalDate()) + " | " +
                                 rs.getString("status");
 
                 list.add(line);
@@ -212,5 +213,20 @@ public class FinancePromoterDAO {
         finance.setStatus(rs.getString("status"));
 
         return finance;
+    }
+
+    private String formatDate(LocalDate date) {
+        return date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    private String formatType(String type) {
+        return switch (type) {
+            case "BONIFICACAO" -> "Bonificação";
+            case "AJUDA_CUSTO" -> "Ajuda de Custo";
+            case "DESCONTO" -> "Desconto";
+            case "ASO" -> "ASO";
+            case "EPI" -> "EPI";
+            default -> type;
+        };
     }
 }

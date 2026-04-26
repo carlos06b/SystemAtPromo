@@ -21,22 +21,45 @@ public class ReportController {
             return;
         }
 
-        BigDecimal promoterTotal = financePromoterDAO.getTotalByPeriod(start, end);
+        var totals = financePromoterDAO.getTotalByTypeAndPeriod(start, end);
+
+        BigDecimal gastosPromotores = BigDecimal.ZERO;
+
+        String[] tiposGasto = {
+                "BONIFICACAO",
+                "AJUDA_CUSTO",
+                "ASO",
+                "EPI"
+        };
+
+        for (String type : tiposGasto) {
+            gastosPromotores = gastosPromotores.add(
+                    totals.getOrDefault(type, BigDecimal.ZERO)
+            );
+        }
+
+        BigDecimal descontos = totals.getOrDefault("DESCONTO", BigDecimal.ZERO);
+
         BigDecimal fixedTotal = fixedExpenseHistoryDAO.getTotalByPeriod(start, end);
         BigDecimal variableTotal = variableExpenseDAO.getTotalByPeriod(start, end);
 
-        BigDecimal total = promoterTotal
+        BigDecimal totalGeral = gastosPromotores
                 .add(fixedTotal)
                 .add(variableTotal);
 
         System.out.println("\n=== RELATÓRIO GERAL DA EMPRESA ===");
         System.out.println("Período: " + formatDate(start) + " até " + formatDate(end));
         System.out.println("----------------------------------");
-        System.out.println("Financeiro dos promotores: R$ " + promoterTotal);
-        System.out.println("Despesas fixas mensais:    R$ " + fixedTotal);
-        System.out.println("Despesas variáveis:        R$ " + variableTotal);
+
+        System.out.println("Financeiro dos promotores: R$ " + gastosPromotores);
+        System.out.println("Despesas fixas:           R$ " + fixedTotal);
+        System.out.println("Despesas variáveis:       R$ " + variableTotal);
+
         System.out.println("----------------------------------");
-        System.out.println("TOTAL GERAL:               R$ " + total);
+        System.out.println("Descontos aplicados:      R$ " + descontos);
+        System.out.println("----------------------------------");
+
+        System.out.println("TOTAL REAL DE GASTOS:     R$ " + totalGeral);
     }
 
     private String formatDate(LocalDate date) {

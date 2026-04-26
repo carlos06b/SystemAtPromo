@@ -46,10 +46,15 @@ public class FinanceController {
         };
 
         for (String type : tiposGasto) {
-            BigDecimal value = totals.getOrDefault(type, BigDecimal.ZERO);
-            totalGastos = totalGastos.add(value);
+            totalGastos = totalGastos.add(
+                    totals.getOrDefault(type, BigDecimal.ZERO)
+            );
         }
 
+        BigDecimal descontos = totals.getOrDefault("DESCONTO", BigDecimal.ZERO);
+
+        System.out.println("--------------------------------");
+        System.out.println("Descontos aplicados: R$ " + descontos);
         System.out.println("--------------------------------");
         System.out.println("TOTAL DE GASTOS: R$ " + totalGastos);
     }
