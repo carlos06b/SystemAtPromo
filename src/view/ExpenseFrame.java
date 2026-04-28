@@ -126,36 +126,40 @@ public class ExpenseFrame extends JFrame {
         formPanel.add(nameLabel);
 
         txtFixedName = createTextField();
-        txtFixedName.setBounds(18, 72, 240, 34);
+        txtFixedName.setBounds(18, 72, 230, 34);
         formPanel.add(txtFixedName);
 
         JLabel amountLabel = createFieldLabel("Valor");
-        amountLabel.setBounds(280, 48, 120, 22);
+        amountLabel.setBounds(265, 48, 120, 22);
         formPanel.add(amountLabel);
 
         txtFixedAmount = createTextField();
-        txtFixedAmount.setBounds(280, 72, 140, 34);
+        txtFixedAmount.setBounds(265, 72, 125, 34);
         formPanel.add(txtFixedAmount);
 
         JLabel dueDateLabel = createFieldLabel("Vencimento");
-        dueDateLabel.setBounds(445, 48, 180, 22);
+        dueDateLabel.setBounds(405, 48, 180, 22);
         formPanel.add(dueDateLabel);
 
         txtFixedDueDate = createTextField();
-        txtFixedDueDate.setBounds(445, 72, 160, 34);
+        txtFixedDueDate.setBounds(405, 72, 140, 34);
         txtFixedDueDate.setToolTipText("Use o formato dd/MM/yyyy");
         formPanel.add(txtFixedDueDate);
 
         JButton btnSave = createPrimaryButton("Cadastrar");
-        btnSave.setBounds(635, 70, 130, 38);
+        btnSave.setBounds(565, 70, 115, 38);
         formPanel.add(btnSave);
 
+        JButton btnEdit = createDarkButton("Editar");
+        btnEdit.setBounds(690, 70, 95, 38);
+        formPanel.add(btnEdit);
+
         JButton btnList = createDarkButton("Atualizar");
-        btnList.setBounds(775, 70, 120, 38);
+        btnList.setBounds(795, 70, 110, 38);
         formPanel.add(btnList);
 
         JButton btnMarkPaid = createPrimaryButton("Marcar Paga");
-        btnMarkPaid.setBounds(905, 70, 130, 38);
+        btnMarkPaid.setBounds(915, 70, 125, 38);
         formPanel.add(btnMarkPaid);
 
         fixedExpenseTable = createStyledTable();
@@ -164,17 +168,18 @@ public class ExpenseFrame extends JFrame {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         bottomPanel.setBackground(LIGHT_GRAY);
 
-        JButton btnDelete = createDangerButton("Excluir Selecionada");
-        btnDelete.setPreferredSize(new Dimension(170, 38));
-        bottomPanel.add(btnDelete);
+        JButton btnInactive = createDangerButton("Inativar Selecionada");
+        btnInactive.setPreferredSize(new Dimension(180, 38));
+        bottomPanel.add(btnInactive);
 
         panel.add(formPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(bottomPanel, BorderLayout.SOUTH);
 
         btnSave.addActionListener(e -> saveFixedExpense());
+        btnEdit.addActionListener(e -> editFixedExpense());
         btnList.addActionListener(e -> loadFixedExpenses());
-        btnDelete.addActionListener(e -> deleteFixedExpense());
+        btnInactive.addActionListener(e -> deleteFixedExpense());
         btnMarkPaid.addActionListener(e -> markFixedExpenseAsPaid());
 
         loadFixedExpenses();
@@ -364,6 +369,7 @@ public class ExpenseFrame extends JFrame {
             expense.setDueDate(dueDate);
             expense.setStatus(false);
             expense.setPaymentDate(null);
+            expense.setActive(true);
 
             fixedExpenseDAO.save(expense);
 
@@ -374,6 +380,67 @@ public class ExpenseFrame extends JFrame {
 
         } catch (Exception ex) {
             showError("Erro ao cadastrar despesa fixa: " + ex.getMessage());
+        }
+    }
+
+    private void editFixedExpense() {
+        int id = getSelectedId(fixedExpenseTable);
+
+        if (id == -1) {
+            showError("Selecione uma despesa fixa para editar.");
+            return;
+        }
+
+        int row = fixedExpenseTable.getSelectedRow();
+        int modelRow = fixedExpenseTable.convertRowIndexToModel(row);
+
+        String currentName = fixedExpenseTable.getModel().getValueAt(modelRow, 1).toString();
+        String currentAmount = fixedExpenseTable.getModel().getValueAt(modelRow, 2).toString()
+                .replace("R$ ", "")
+                .replace(".", "")
+                .replace(",", ".");
+        String currentDueDate = fixedExpenseTable.getModel().getValueAt(modelRow, 3).toString();
+
+        JTextField nameField = createTextField(currentName);
+        JTextField amountField = createTextField(currentAmount);
+        JTextField dueDateField = createTextField(currentDueDate);
+
+        Object[] fields = {
+                "Nome:", nameField,
+                "Valor:", amountField,
+                "Vencimento (dd/MM/yyyy):", dueDateField
+        };
+
+        int option = JOptionPane.showConfirmDialog(
+                this,
+                fields,
+                "Editar Despesa Fixa",
+                JOptionPane.OK_CANCEL_OPTION
+        );
+
+        if (option == JOptionPane.OK_OPTION) {
+            try {
+                String name = nameField.getText().trim();
+
+                if (name.isEmpty()) {
+                    showError("Informe o nome da despesa fixa.");
+                    return;
+                }
+
+                FixedExpense expense = new FixedExpense();
+                expense.setId(id);
+                expense.setName(name);
+                expense.setAmount(parseMoney(amountField.getText()));
+                expense.setDueDate(parseDate(dueDateField.getText()));
+
+                fixedExpenseDAO.update(expense);
+                loadFixedExpenses();
+
+                showSuccess("Despesa fixa atualizada com sucesso!");
+
+            } catch (Exception ex) {
+                showError("Erro ao editar despesa fixa: " + ex.getMessage());
+            }
         }
     }
 
@@ -407,21 +474,22 @@ public class ExpenseFrame extends JFrame {
         int id = getSelectedId(fixedExpenseTable);
 
         if (id == -1) {
-            showError("Selecione uma despesa fixa para excluir.");
+            showError("Selecione uma despesa fixa para inativar.");
             return;
         }
 
         int option = JOptionPane.showConfirmDialog(
                 this,
-                "Tem certeza que deseja excluir essa despesa fixa?",
-                "Confirmar exclusão",
+                "Tem certeza que deseja inativar essa despesa fixa?\n\n" +
+                        "Ela não será apagada do histórico, apenas deixará de aparecer e gerar nos próximos meses.",
+                "Confirmar inativação",
                 JOptionPane.YES_NO_OPTION
         );
 
         if (option == JOptionPane.YES_OPTION) {
-            fixedExpenseDAO.delete(id);
+            fixedExpenseDAO.inactivate(id);
             loadFixedExpenses();
-            showSuccess("Despesa fixa excluída com sucesso!");
+            showSuccess("Despesa fixa inativada com sucesso!");
         }
     }
 
@@ -648,7 +716,11 @@ public class ExpenseFrame extends JFrame {
     }
 
     private JTextField createTextField() {
-        JTextField field = new JTextField();
+        return createTextField("");
+    }
+
+    private JTextField createTextField(String text) {
+        JTextField field = new JTextField(text);
         field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         field.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_GRAY),

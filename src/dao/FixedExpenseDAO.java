@@ -3,7 +3,6 @@ package dao;
 import database.ConnectionFactory;
 import model.FixedExpense;
 
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,8 +12,11 @@ import java.util.List;
 public class FixedExpenseDAO {
 
     public void save(FixedExpense expense) {
-
-        String sql = "INSERT INTO fixed_expense (name, amount, due_date, status, payment_date) VALUES (?, ?, ?, ?, ?)";
+        String sql = """
+                INSERT INTO fixed_expense
+                (name, amount, due_date, status, payment_date, active)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -30,8 +32,9 @@ public class FixedExpenseDAO {
                 stmt.setNull(5, java.sql.Types.DATE);
             }
 
-            stmt.executeUpdate();
+            stmt.setBoolean(6, true);
 
+            stmt.executeUpdate();
             System.out.println("Despesa fixa cadastrada com sucesso!");
 
         } catch (Exception e) {
@@ -40,17 +43,20 @@ public class FixedExpenseDAO {
     }
 
     public List<FixedExpense> findAll() {
-
         List<FixedExpense> list = new ArrayList<>();
 
-        String sql = "SELECT * FROM fixed_expense";
+        String sql = """
+                SELECT *
+                FROM fixed_expense
+                WHERE active = 1
+                ORDER BY due_date ASC
+                """;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-
                 FixedExpense expense = new FixedExpense();
 
                 expense.setId(rs.getInt("id"));
@@ -61,6 +67,8 @@ public class FixedExpenseDAO {
 
                 if (rs.getDate("payment_date") != null) {
                     expense.setPaymentDate(rs.getDate("payment_date").toLocalDate());
+                } else {
+                    expense.setPaymentDate(null);
                 }
 
                 list.add(expense);
@@ -74,8 +82,13 @@ public class FixedExpenseDAO {
     }
 
     public void markAsPaid(int id, java.time.LocalDate paymentDate) {
-
-        String sql = "UPDATE fixed_expense SET status = true, payment_date = ? WHERE id = ?";
+        String sql = """
+                UPDATE fixed_expense
+                SET status = true,
+                    payment_date = ?
+                WHERE id = ?
+                  AND active = 1
+                """;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -88,7 +101,7 @@ public class FixedExpenseDAO {
             if (rows > 0) {
                 System.out.println("Despesa marcada como paga!");
             } else {
-                System.out.println("Despesa não encontrada.");
+                System.out.println("Despesa não encontrada ou inativa.");
             }
 
         } catch (Exception e) {
@@ -96,9 +109,38 @@ public class FixedExpenseDAO {
         }
     }
 
-    public void updateStatus(int id, boolean status) {
+    public void update(FixedExpense expense) {
+        String sql = """
+            UPDATE fixed_expense
+            SET name = ?,
+                amount = ?,
+                due_date = ?
+            WHERE id = ?
+              AND active = 1
+            """;
 
-        String sql = "UPDATE fixed_expense SET status = ? WHERE id = ?";
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, expense.getName());
+            stmt.setBigDecimal(2, expense.getAmount());
+            stmt.setDate(3, java.sql.Date.valueOf(expense.getDueDate()));
+            stmt.setInt(4, expense.getId());
+
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void updateStatus(int id, boolean status) {
+        String sql = """
+                UPDATE fixed_expense
+                SET status = ?
+                WHERE id = ?
+                  AND active = 1
+                """;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -111,6 +153,31 @@ public class FixedExpenseDAO {
             if (rows > 0) {
                 System.out.println("Status da despesa atualizado!");
             } else {
+                System.out.println("Despesa não encontrada ou inativa.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void inactivate(int id) {
+        String sql = """
+                UPDATE fixed_expense
+                SET active = 0
+                WHERE id = ?
+                """;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            int rows = stmt.executeUpdate();
+
+            if (rows > 0) {
+                System.out.println("Despesa fixa inativada!");
+            } else {
                 System.out.println("Despesa não encontrada.");
             }
 
@@ -120,7 +187,6 @@ public class FixedExpenseDAO {
     }
 
     public void delete(int id) {
-
         String sql = "DELETE FROM fixed_expense WHERE id = ?";
 
         try (Connection conn = ConnectionFactory.getConnection();

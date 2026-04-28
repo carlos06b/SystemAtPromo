@@ -10,6 +10,7 @@ public class FixedExpense {
     private LocalDate dueDate;
     private boolean status;
     private LocalDate paymentDate;
+    private boolean active;
 
     public FixedExpense() {}
 
@@ -23,6 +24,14 @@ public class FixedExpense {
 
     public void setAmount(BigDecimal amount) {
         this.amount = amount;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
     }
 
     public LocalDate getDueDate() {
