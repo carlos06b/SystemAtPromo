@@ -10,61 +10,163 @@ public class LoginFrame extends JFrame {
 
     private JTextField emailField;
     private JPasswordField passwordField;
-    private UserController userController;
+    private final UserController userController;
+
+    private final Color ORANGE = new Color(255, 102, 0);
+    private final Color BLACK = new Color(18, 18, 18);
+    private final Color WHITE = Color.WHITE;
+    private final Color LIGHT_GRAY = new Color(245, 245, 245);
 
     public LoginFrame() {
-
         userController = new UserController();
 
         setTitle("Sistema At Promo - Login");
-        setSize(400, 250);
+        setSize(900, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(null);
+        setResizable(false);
 
-        JLabel title = new JLabel("Sistema At Promo");
-        title.setFont(new Font("Arial", Font.BOLD, 20));
-        title.setBounds(100, 20, 200, 30);
-        add(title);
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(WHITE);
 
-        JLabel emailLabel = new JLabel("Email:");
-        emailLabel.setBounds(50, 70, 80, 25);
-        add(emailLabel);
+        mainPanel.add(createLeftPanel(), BorderLayout.WEST);
+        mainPanel.add(createRightPanel(), BorderLayout.CENTER);
 
-        emailField = new JTextField();
-        emailField.setBounds(130, 70, 200, 25);
-        add(emailField);
-
-        JLabel passwordLabel = new JLabel("Senha:");
-        passwordLabel.setBounds(50, 110, 80, 25);
-        add(passwordLabel);
-
-        passwordField = new JPasswordField();
-        passwordField.setBounds(130, 110, 200, 25);
-        add(passwordField);
-
-        JButton loginButton = new JButton("Entrar");
-        loginButton.setBounds(130, 160, 120, 30);
-        add(loginButton);
-
-        loginButton.addActionListener(e -> login());
-
+        add(mainPanel);
         setVisible(true);
     }
 
-    private void login() {
+    private JPanel createLeftPanel() {
+        JPanel panel = new JPanel(null);
+        panel.setPreferredSize(new Dimension(360, 550));
+        panel.setBackground(BLACK);
 
-        String email = emailField.getText();
-        String password = new String(passwordField.getPassword());
+        JLabel logo = new JLabel("AT");
+        logo.setForeground(ORANGE);
+        logo.setFont(new Font("Segoe UI", Font.BOLD, 64));
+        logo.setBounds(70, 80, 220, 80);
+        panel.add(logo);
+
+        JLabel title = new JLabel("PROMO");
+        title.setForeground(WHITE);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 42));
+        title.setBounds(70, 145, 250, 60);
+        panel.add(title);
+
+        JLabel subtitle = new JLabel("<html>Gestão interna de promotores,<br>financeiro e solicitações.</html>");
+        subtitle.setForeground(new Color(220, 220, 220));
+        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        subtitle.setBounds(70, 225, 260, 70);
+        panel.add(subtitle);
+
+        JPanel line = new JPanel();
+        line.setBackground(ORANGE);
+        line.setBounds(70, 320, 120, 5);
+        panel.add(line);
+
+        JLabel footer = new JLabel("Sistema corporativo");
+        footer.setForeground(new Color(180, 180, 180));
+        footer.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        footer.setBounds(70, 460, 220, 30);
+        panel.add(footer);
+
+        return panel;
+    }
+
+    private JPanel createRightPanel() {
+        JPanel panel = new JPanel(null);
+        panel.setBackground(WHITE);
+
+        JLabel title = new JLabel("Acesse sua conta");
+        title.setForeground(BLACK);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        title.setBounds(95, 75, 350, 40);
+        panel.add(title);
+
+        JLabel subtitle = new JLabel("Entre com seu email e senha para continuar");
+        subtitle.setForeground(new Color(100, 100, 100));
+        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        subtitle.setBounds(98, 115, 360, 25);
+        panel.add(subtitle);
+
+        JLabel emailLabel = new JLabel("Email");
+        emailLabel.setForeground(BLACK);
+        emailLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        emailLabel.setBounds(100, 175, 300, 25);
+        panel.add(emailLabel);
+
+        emailField = new JTextField();
+        emailField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        emailField.setBounds(100, 205, 360, 42);
+        emailField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(210, 210, 210)),
+                BorderFactory.createEmptyBorder(5, 12, 5, 12)
+        ));
+        panel.add(emailField);
+
+        JLabel passwordLabel = new JLabel("Senha");
+        passwordLabel.setForeground(BLACK);
+        passwordLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        passwordLabel.setBounds(100, 270, 300, 25);
+        panel.add(passwordLabel);
+
+        passwordField = new JPasswordField();
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        passwordField.setBounds(100, 300, 360, 42);
+        passwordField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(210, 210, 210)),
+                BorderFactory.createEmptyBorder(5, 12, 5, 12)
+        ));
+        panel.add(passwordField);
+
+        JButton loginButton = new JButton("Entrar no sistema");
+        loginButton.setBounds(100, 375, 360, 45);
+        loginButton.setBackground(ORANGE);
+        loginButton.setForeground(WHITE);
+        loginButton.setFocusPainted(false);
+        loginButton.setBorderPainted(false);
+        loginButton.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        panel.add(loginButton);
+
+        JLabel hint = new JLabel("Sistema At Promo • RH e Financeiro");
+        hint.setForeground(new Color(130, 130, 130));
+        hint.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        hint.setBounds(180, 445, 260, 25);
+        panel.add(hint);
+
+        loginButton.addActionListener(e -> login());
+
+        getRootPane().setDefaultButton(loginButton);
+
+        return panel;
+    }
+
+    private void login() {
+        String email = emailField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+
+        if (email.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Preencha email e senha.",
+                    "Campos obrigatórios",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
 
         User user = userController.login(email, password);
 
         if (user == null) {
-            JOptionPane.showMessageDialog(this, "Email ou senha inválidos");
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Email ou senha inválidos.",
+                    "Erro de login",
+                    JOptionPane.ERROR_MESSAGE
+            );
             return;
         }
-
-        JOptionPane.showMessageDialog(this, "Login realizado!");
 
         dispose();
 

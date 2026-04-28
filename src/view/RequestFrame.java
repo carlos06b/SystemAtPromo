@@ -7,6 +7,7 @@ import model.User;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,54 +17,94 @@ import java.util.List;
 
 public class RequestFrame extends JFrame {
 
-    private RequestController requestController;
-    private PromoterController promoterController;
-    private User loggedUser;
+    private final RequestController requestController;
+    private final PromoterController promoterController;
+    private final User loggedUser;
+
     private JTable table;
     private DefaultTableModel tableModel;
+
+    private final Color ORANGE = new Color(255, 102, 0);
+    private final Color BLACK = new Color(18, 18, 18);
+    private final Color WHITE = Color.WHITE;
+    private final Color LIGHT_GRAY = new Color(245, 245, 245);
+    private final Color BORDER_GRAY = new Color(220, 220, 220);
+    private final Color TEXT_GRAY = new Color(90, 90, 90);
+    private final Color RED = new Color(190, 40, 40);
 
     public RequestFrame(User loggedUser) {
         this.loggedUser = loggedUser;
         this.requestController = new RequestController();
         this.promoterController = new PromoterController();
 
-        setTitle("Solicitações - " + loggedUser.getJobTittle());
-        setSize(1100, 550);
+        setTitle("Sistema At Promo - Solicitações");
+        setSize(1100, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(null);
+        setResizable(false);
+        setLayout(new BorderLayout());
+
+        add(createHeaderPanel(), BorderLayout.NORTH);
+        add(createMainPanel(), BorderLayout.CENTER);
+
+        loadPending();
+
+        setVisible(true);
+    }
+
+    private JPanel createHeaderPanel() {
+        JPanel header = new JPanel(null);
+        header.setPreferredSize(new Dimension(1100, 95));
+        header.setBackground(BLACK);
 
         JLabel title = new JLabel("Gerenciamento de Solicitações");
-        title.setBounds(420, 20, 300, 30);
-        add(title);
+        title.setForeground(WHITE);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 25));
+        title.setBounds(30, 20, 450, 32);
+        header.add(title);
 
-        JButton btnListAll = new JButton("Listar Todas");
-        btnListAll.setBounds(30, 70, 130, 30);
-        add(btnListAll);
+        JLabel subtitle = new JLabel("Acompanhe solicitações do RH, aprovações financeiras e dados para pagamento.");
+        subtitle.setForeground(new Color(210, 210, 210));
+        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        subtitle.setBounds(32, 55, 650, 22);
+        header.add(subtitle);
 
-        JButton btnPending = new JButton("Pendentes");
-        btnPending.setBounds(170, 70, 120, 30);
-        add(btnPending);
+        JLabel userLabel = new JLabel(loggedUser.getName() + " • " + loggedUser.getJobTittle());
+        userLabel.setForeground(ORANGE);
+        userLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        userLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        userLabel.setBounds(720, 30, 330, 30);
+        header.add(userLabel);
 
-        JButton btnPeriod = new JButton("Por Período");
-        btnPeriod.setBounds(300, 70, 130, 30);
-        add(btnPeriod);
+        return header;
+    }
 
-        JButton btnCreate = new JButton("Criar");
-        btnCreate.setBounds(440, 70, 100, 30);
-        add(btnCreate);
+    private JPanel createMainPanel() {
+        JPanel main = new JPanel(null);
+        main.setBackground(LIGHT_GRAY);
 
-        JButton btnApprove = new JButton("Aprovar");
-        btnApprove.setBounds(550, 70, 110, 30);
-        add(btnApprove);
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 12));
+        actionPanel.setBackground(WHITE);
+        actionPanel.setBorder(BorderFactory.createLineBorder(BORDER_GRAY));
+        actionPanel.setBounds(25, 20, 1035, 65);
 
-        JButton btnReject = new JButton("Rejeitar");
-        btnReject.setBounds(670, 70, 110, 30);
-        add(btnReject);
+        JButton btnListAll = createSecondaryButton("Listar Todas");
+        JButton btnPending = createPrimaryButton("Pendentes");
+        JButton btnPeriod = createSecondaryButton("Por Período");
+        JButton btnCreate = createPrimaryButton("Criar");
+        JButton btnApprove = createPrimaryButton("Aprovar");
+        JButton btnReject = createDangerButton("Rejeitar");
+        JButton btnDetails = createDarkButton("Ver Detalhes");
 
-        JButton btnDetails = new JButton("Ver Detalhes");
-        btnDetails.setBounds(790, 70, 130, 30);
-        add(btnDetails);
+        actionPanel.add(btnListAll);
+        actionPanel.add(btnPending);
+        actionPanel.add(btnPeriod);
+        actionPanel.add(btnCreate);
+        actionPanel.add(btnApprove);
+        actionPanel.add(btnReject);
+        actionPanel.add(btnDetails);
+
+        main.add(actionPanel);
 
         String[] columns = {
                 "ID", "Promotor", "Tipo", "Valor", "Mensagem", "Status", "Data", "MensagemCompleta"
@@ -76,12 +117,20 @@ public class RequestFrame extends JFrame {
         };
 
         table = new JTable(tableModel);
+        table.setRowHeight(30);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        table.getTableHeader().setBackground(BLACK);
+        table.getTableHeader().setForeground(WHITE);
+        table.setSelectionBackground(new Color(255, 225, 205));
+        table.setSelectionForeground(BLACK);
+        table.setGridColor(new Color(235, 235, 235));
 
         table.getColumnModel().getColumn(0).setMinWidth(0);
         table.getColumnModel().getColumn(0).setMaxWidth(0);
         table.getColumnModel().getColumn(0).setWidth(0);
 
-        table.getColumnModel().getColumn(4).setPreferredWidth(250);
+        table.getColumnModel().getColumn(4).setPreferredWidth(270);
 
         table.getColumnModel().getColumn(7).setMinWidth(0);
         table.getColumnModel().getColumn(7).setMaxWidth(0);
@@ -96,8 +145,9 @@ public class RequestFrame extends JFrame {
         });
 
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(30, 120, 1020, 350);
-        add(scrollPane);
+        scrollPane.setBounds(25, 105, 1035, 390);
+        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER_GRAY));
+        main.add(scrollPane);
 
         btnListAll.addActionListener(e -> loadAll());
         btnPending.addActionListener(e -> loadPending());
@@ -116,8 +166,7 @@ public class RequestFrame extends JFrame {
             btnCreate.setEnabled(false);
         }
 
-        loadPending();
-        setVisible(true);
+        return main;
     }
 
     private void loadAll() {
@@ -162,7 +211,7 @@ public class RequestFrame extends JFrame {
                     .toLocalDate();
 
             if (start.isAfter(end)) {
-                JOptionPane.showMessageDialog(this, "Data inicial não pode ser maior que a final.");
+                showWarning("Data inicial não pode ser maior que a final.");
                 return;
             }
 
@@ -174,22 +223,24 @@ public class RequestFrame extends JFrame {
             );
 
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Erro ao selecionar período.");
+            showError("Erro ao selecionar período.");
         }
     }
 
     private void openCreateDialog() {
-
         JTextField searchField = new JTextField();
         DefaultListModel<PromoterItem> listModel = new DefaultListModel<>();
         JList<PromoterItem> promoterList = new JList<>(listModel);
-        JScrollPane listScroll = new JScrollPane(promoterList);
 
-        listScroll.setPreferredSize(new java.awt.Dimension(300, 100));
+        promoterList.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        promoterList.setSelectionBackground(new Color(255, 225, 205));
+        promoterList.setSelectionForeground(BLACK);
+
+        JScrollPane listScroll = new JScrollPane(promoterList);
+        listScroll.setPreferredSize(new Dimension(330, 100));
 
         searchField.addCaretListener(e -> {
             String text = searchField.getText().trim();
-
             listModel.clear();
 
             if (text.length() < 2) return;
@@ -210,10 +261,11 @@ public class RequestFrame extends JFrame {
         });
 
         JTextField amountField = new JTextField();
-        JTextArea messageArea = new JTextArea(5, 25);
 
+        JTextArea messageArea = new JTextArea(5, 25);
         messageArea.setLineWrap(true);
         messageArea.setWrapStyleWord(true);
+        messageArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
         Object[] fields = {
                 "Buscar promotor pelo nome:", searchField,
@@ -235,7 +287,7 @@ public class RequestFrame extends JFrame {
                 PromoterItem selectedPromoter = promoterList.getSelectedValue();
 
                 if (selectedPromoter == null) {
-                    JOptionPane.showMessageDialog(this, "Selecione um promotor na lista.");
+                    showWarning("Selecione um promotor na lista.");
                     return;
                 }
 
@@ -245,12 +297,12 @@ public class RequestFrame extends JFrame {
                 String message = messageArea.getText().trim();
 
                 if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                    JOptionPane.showMessageDialog(this, "O valor precisa ser maior que zero.");
+                    showWarning("O valor precisa ser maior que zero.");
                     return;
                 }
 
                 if (message.isBlank()) {
-                    JOptionPane.showMessageDialog(this, "Mensagem não pode ficar vazia.");
+                    showWarning("Mensagem não pode ficar vazia.");
                     return;
                 }
 
@@ -263,11 +315,11 @@ public class RequestFrame extends JFrame {
                         message
                 );
 
-                JOptionPane.showMessageDialog(this, "Solicitação criada!");
+                showSuccess("Solicitação criada!");
                 loadPending();
 
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Dados inválidos.");
+                showError("Dados inválidos.");
             }
         }
     }
@@ -276,11 +328,12 @@ public class RequestFrame extends JFrame {
         int row = table.getSelectedRow();
 
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Selecione uma solicitação.");
+            showWarning("Selecione uma solicitação.");
             return;
         }
 
-        int id = (int) tableModel.getValueAt(row, 0);
+        int modelRow = table.convertRowIndexToModel(row);
+        int id = (int) tableModel.getValueAt(modelRow, 0);
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
@@ -291,7 +344,7 @@ public class RequestFrame extends JFrame {
 
         if (confirm == JOptionPane.YES_OPTION) {
             requestController.approve(id, loggedUser.getId());
-            JOptionPane.showMessageDialog(this, "Solicitação aprovada!");
+            showSuccess("Solicitação aprovada!");
             loadPending();
         }
     }
@@ -300,11 +353,12 @@ public class RequestFrame extends JFrame {
         int row = table.getSelectedRow();
 
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Selecione uma solicitação.");
+            showWarning("Selecione uma solicitação.");
             return;
         }
 
-        int id = (int) tableModel.getValueAt(row, 0);
+        int modelRow = table.convertRowIndexToModel(row);
+        int id = (int) tableModel.getValueAt(modelRow, 0);
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
@@ -315,7 +369,7 @@ public class RequestFrame extends JFrame {
 
         if (confirm == JOptionPane.YES_OPTION) {
             requestController.reject(id);
-            JOptionPane.showMessageDialog(this, "Solicitação rejeitada!");
+            showSuccess("Solicitação rejeitada!");
             loadPending();
         }
     }
@@ -324,17 +378,19 @@ public class RequestFrame extends JFrame {
         int row = table.getSelectedRow();
 
         if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Selecione uma solicitação.");
+            showWarning("Selecione uma solicitação.");
             return;
         }
 
-        Object promoter = tableModel.getValueAt(row, 1);
-        Object type = tableModel.getValueAt(row, 2);
-        Object amount = tableModel.getValueAt(row, 3);
-        Object shortMessage = tableModel.getValueAt(row, 4);
-        Object status = tableModel.getValueAt(row, 5);
-        Object date = tableModel.getValueAt(row, 6);
-        Object fullMessage = tableModel.getValueAt(row, 7);
+        int modelRow = table.convertRowIndexToModel(row);
+
+        Object promoter = tableModel.getValueAt(modelRow, 1);
+        Object type = tableModel.getValueAt(modelRow, 2);
+        Object amount = tableModel.getValueAt(modelRow, 3);
+        Object shortMessage = tableModel.getValueAt(modelRow, 4);
+        Object status = tableModel.getValueAt(modelRow, 5);
+        Object date = tableModel.getValueAt(modelRow, 6);
+        Object fullMessage = tableModel.getValueAt(modelRow, 7);
 
         String messageToShow = fullMessage != null ? fullMessage.toString() : shortMessage.toString();
 
@@ -342,7 +398,7 @@ public class RequestFrame extends JFrame {
         detailsArea.setEditable(false);
         detailsArea.setLineWrap(true);
         detailsArea.setWrapStyleWord(true);
-
+        detailsArea.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         detailsArea.setText(
                 "Promotor: " + promoter + "\n" +
                         "Tipo: " + type + "\n" +
@@ -354,7 +410,7 @@ public class RequestFrame extends JFrame {
         );
 
         JScrollPane scrollPane = new JScrollPane(detailsArea);
-        scrollPane.setPreferredSize(new java.awt.Dimension(550, 320));
+        scrollPane.setPreferredSize(new Dimension(550, 320));
 
         JOptionPane.showMessageDialog(
                 this,
@@ -398,9 +454,67 @@ public class RequestFrame extends JFrame {
 
         } catch (Exception e) {
             tableModel.addRow(new Object[]{
-                    "-", "-", "-", "-", shortenText(line, 45), "-", "-", line
+                    "-",
+                    "-",
+                    "-",
+                    "-",
+                    shortenText(line, 45),
+                    "-",
+                    "-",
+                    line
             });
         }
+    }
+
+    private JButton createPrimaryButton(String text) {
+        JButton button = baseButton(text);
+        button.setBackground(ORANGE);
+        button.setForeground(WHITE);
+        return button;
+    }
+
+    private JButton createSecondaryButton(String text) {
+        JButton button = baseButton(text);
+        button.setBackground(WHITE);
+        button.setForeground(BLACK);
+        button.setBorder(BorderFactory.createLineBorder(BORDER_GRAY));
+        return button;
+    }
+
+    private JButton createDarkButton(String text) {
+        JButton button = baseButton(text);
+        button.setBackground(BLACK);
+        button.setForeground(WHITE);
+        return button;
+    }
+
+    private JButton createDangerButton(String text) {
+        JButton button = baseButton(text);
+        button.setBackground(RED);
+        button.setForeground(WHITE);
+        return button;
+    }
+
+    private JButton baseButton(String text) {
+        JButton button = new JButton(text);
+        button.setPreferredSize(new Dimension(125, 38));
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
+    private void showSuccess(String message) {
+        JOptionPane.showMessageDialog(this, message, "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void showWarning(String message) {
+        JOptionPane.showMessageDialog(this, message, "Atenção", JOptionPane.WARNING_MESSAGE);
+    }
+
+    private void showError(String message) {
+        JOptionPane.showMessageDialog(this, message, "Erro", JOptionPane.ERROR_MESSAGE);
     }
 
     private String convertTypeToDatabase(String type) {
@@ -427,7 +541,9 @@ public class RequestFrame extends JFrame {
 
     private String shortenText(String text, int maxLength) {
         if (text == null) return "";
+
         if (text.length() <= maxLength) return text;
+
         return text.substring(0, maxLength) + "...";
     }
 
@@ -442,8 +558,8 @@ public class RequestFrame extends JFrame {
     }
 
     private static class PromoterItem {
-        private int id;
-        private String name;
+        private final int id;
+        private final String name;
 
         public PromoterItem(int id, String name) {
             this.id = id;

@@ -24,6 +24,14 @@ public class ExpenseFrame extends JFrame {
 
     private final DateTimeFormatter brFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    private final Color ORANGE = new Color(255, 102, 0);
+    private final Color BLACK = new Color(18, 18, 18);
+    private final Color WHITE = Color.WHITE;
+    private final Color LIGHT_GRAY = new Color(245, 245, 245);
+    private final Color BORDER_GRAY = new Color(220, 220, 220);
+    private final Color TEXT_GRAY = new Color(90, 90, 90);
+    private final Color RED = new Color(190, 40, 40);
+
     private JTable fixedExpenseTable;
     private JTable fixedExpenseHistoryTable;
     private JTable variableExpenseTable;
@@ -43,59 +51,126 @@ public class ExpenseFrame extends JFrame {
     private JTextField txtVariableEndDate;
 
     public ExpenseFrame() {
-        setTitle("Controle de Despesas");
-        setSize(1050, 650);
+        setTitle("Sistema At Promo - Controle de Despesas");
+        setSize(1320, 920);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setResizable(false);
         setLayout(new BorderLayout());
 
-        JTabbedPane tabbedPane = new JTabbedPane();
-
-        tabbedPane.addTab("Despesas Fixas", createFixedExpensePanel());
-        tabbedPane.addTab("Fixas do Mês", createFixedExpenseHistoryPanel());
-        tabbedPane.addTab("Despesas Variáveis", createVariableExpensePanel());
-
-        add(tabbedPane, BorderLayout.CENTER);
+        add(createHeaderPanel(), BorderLayout.NORTH);
+        add(createMainPanel(), BorderLayout.CENTER);
 
         setVisible(true);
     }
 
+    private JPanel createHeaderPanel() {
+        JPanel header = new JPanel(null);
+        header.setPreferredSize(new Dimension(1120, 95));
+        header.setBackground(BLACK);
+
+        JLabel title = new JLabel("Controle de Despesas");
+        title.setForeground(WHITE);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        title.setBounds(30, 20, 400, 34);
+        header.add(title);
+
+        JLabel subtitle = new JLabel("Cadastre, acompanhe e controle despesas fixas, mensais e variáveis da empresa.");
+        subtitle.setForeground(new Color(210, 210, 210));
+        subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        subtitle.setBounds(32, 56, 760, 22);
+        header.add(subtitle);
+
+        JPanel line = new JPanel();
+        line.setBackground(ORANGE);
+        line.setBounds(30, 82, 185, 4);
+        header.add(line);
+
+        return header;
+    }
+
+    private JPanel createMainPanel() {
+        JPanel main = new JPanel(new BorderLayout());
+        main.setBackground(LIGHT_GRAY);
+        main.setBorder(BorderFactory.createEmptyBorder(24, 28, 28, 28));
+
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        tabs.setBackground(WHITE);
+        tabs.setForeground(BLACK);
+
+        tabs.addTab("Despesas Fixas", createFixedExpensePanel());
+        tabs.addTab("Fixas do Mês", createFixedExpenseHistoryPanel());
+        tabs.addTab("Despesas Variáveis", createVariableExpensePanel());
+
+        main.add(tabs, BorderLayout.CENTER);
+
+        return main;
+    }
+
     private JPanel createFixedExpensePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout(0, 16));
+        panel.setBackground(LIGHT_GRAY);
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
 
-        JPanel formPanel = new JPanel(new GridLayout(2, 4, 10, 10));
-        formPanel.setBorder(BorderFactory.createTitledBorder("Cadastrar despesa fixa"));
+        JPanel formPanel = createCardPanel();
+        formPanel.setLayout(null);
+        formPanel.setPreferredSize(new Dimension(1000, 125));
 
-        txtFixedName = new JTextField();
-        txtFixedAmount = new JTextField();
-        txtFixedDueDate = new JTextField();
+        JLabel title = createSectionTitle("Cadastrar despesa fixa");
+        title.setBounds(18, 12, 300, 25);
+        formPanel.add(title);
 
-        JButton btnSave = new JButton("Cadastrar");
-        JButton btnList = new JButton("Atualizar Lista");
-        JButton btnDelete = new JButton("Excluir Selecionada");
-        JButton btnMarkPaid = new JButton("Marcar como Paga");
+        JLabel nameLabel = createFieldLabel("Nome");
+        nameLabel.setBounds(18, 48, 160, 22);
+        formPanel.add(nameLabel);
 
-        formPanel.add(new JLabel("Nome:"));
-        formPanel.add(new JLabel("Valor:"));
-        formPanel.add(new JLabel("Vencimento (dd/MM/yyyy):"));
-        formPanel.add(new JLabel("Ações:"));
-
+        txtFixedName = createTextField();
+        txtFixedName.setBounds(18, 72, 240, 34);
         formPanel.add(txtFixedName);
+
+        JLabel amountLabel = createFieldLabel("Valor");
+        amountLabel.setBounds(280, 48, 120, 22);
+        formPanel.add(amountLabel);
+
+        txtFixedAmount = createTextField();
+        txtFixedAmount.setBounds(280, 72, 140, 34);
         formPanel.add(txtFixedAmount);
+
+        JLabel dueDateLabel = createFieldLabel("Vencimento");
+        dueDateLabel.setBounds(445, 48, 180, 22);
+        formPanel.add(dueDateLabel);
+
+        txtFixedDueDate = createTextField();
+        txtFixedDueDate.setBounds(445, 72, 160, 34);
+        txtFixedDueDate.setToolTipText("Use o formato dd/MM/yyyy");
         formPanel.add(txtFixedDueDate);
+
+        JButton btnSave = createPrimaryButton("Cadastrar");
+        btnSave.setBounds(635, 70, 130, 38);
         formPanel.add(btnSave);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(btnList);
-        buttonPanel.add(btnMarkPaid);
-        buttonPanel.add(btnDelete);
+        JButton btnList = createDarkButton("Atualizar");
+        btnList.setBounds(775, 70, 120, 38);
+        formPanel.add(btnList);
 
-        fixedExpenseTable = new JTable();
-        JScrollPane scrollPane = new JScrollPane(fixedExpenseTable);
+        JButton btnMarkPaid = createPrimaryButton("Marcar Paga");
+        btnMarkPaid.setBounds(905, 70, 130, 38);
+        formPanel.add(btnMarkPaid);
+
+        fixedExpenseTable = createStyledTable();
+        JScrollPane scrollPane = createTableScroll(fixedExpenseTable);
+
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        bottomPanel.setBackground(LIGHT_GRAY);
+
+        JButton btnDelete = createDangerButton("Excluir Selecionada");
+        btnDelete.setPreferredSize(new Dimension(170, 38));
+        bottomPanel.add(btnDelete);
 
         panel.add(formPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
 
         btnSave.addActionListener(e -> saveFixedExpense());
         btnList.addActionListener(e -> loadFixedExpenses());
@@ -108,37 +183,51 @@ public class ExpenseFrame extends JFrame {
     }
 
     private JPanel createFixedExpenseHistoryPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout(0, 16));
+        panel.setBackground(LIGHT_GRAY);
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
 
-        JPanel topPanel = new JPanel(new GridLayout(2, 4, 10, 10));
-        topPanel.setBorder(BorderFactory.createTitledBorder("Despesas fixas lançadas no mês"));
+        JPanel filterPanel = createCardPanel();
+        filterPanel.setLayout(null);
+        filterPanel.setPreferredSize(new Dimension(1000, 125));
 
-        txtHistoryStartDate = new JTextField();
-        txtHistoryEndDate = new JTextField();
+        JLabel title = createSectionTitle("Despesas fixas lançadas no mês");
+        title.setBounds(18, 12, 360, 25);
+        filterPanel.add(title);
 
-        JButton btnGenerateMonth = new JButton("Gerar Fixas do Mês Atual");
-        JButton btnSearch = new JButton("Buscar por Período");
-        JButton btnMarkPaid = new JButton("Marcar como Paga");
+        JLabel startLabel = createFieldLabel("Data inicial");
+        startLabel.setBounds(18, 48, 140, 22);
+        filterPanel.add(startLabel);
 
-        topPanel.add(new JLabel("Data inicial (dd/MM/yyyy):"));
-        topPanel.add(new JLabel("Data final (dd/MM/yyyy):"));
-        topPanel.add(new JLabel("Gerar despesas mensais:"));
-        topPanel.add(new JLabel("Ações:"));
+        txtHistoryStartDate = createTextField();
+        txtHistoryStartDate.setBounds(18, 72, 145, 34);
+        filterPanel.add(txtHistoryStartDate);
 
-        topPanel.add(txtHistoryStartDate);
-        topPanel.add(txtHistoryEndDate);
-        topPanel.add(btnGenerateMonth);
-        topPanel.add(btnSearch);
+        JLabel endLabel = createFieldLabel("Data final");
+        endLabel.setBounds(185, 48, 140, 22);
+        filterPanel.add(endLabel);
 
-        fixedExpenseHistoryTable = new JTable();
-        JScrollPane scrollPane = new JScrollPane(fixedExpenseHistoryTable);
+        txtHistoryEndDate = createTextField();
+        txtHistoryEndDate.setBounds(185, 72, 145, 34);
+        filterPanel.add(txtHistoryEndDate);
 
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottomPanel.add(btnMarkPaid);
+        JButton btnSearch = createDarkButton("Buscar Período");
+        btnSearch.setBounds(360, 70, 145, 38);
+        filterPanel.add(btnSearch);
 
-        panel.add(topPanel, BorderLayout.NORTH);
+        JButton btnGenerateMonth = createPrimaryButton("Gerar Mês Atual");
+        btnGenerateMonth.setBounds(515, 70, 155, 38);
+        filterPanel.add(btnGenerateMonth);
+
+        JButton btnMarkPaid = createPrimaryButton("Marcar como Paga");
+        btnMarkPaid.setBounds(680, 70, 165, 38);
+        filterPanel.add(btnMarkPaid);
+
+        fixedExpenseHistoryTable = createStyledTable();
+        JScrollPane scrollPane = createTableScroll(fixedExpenseHistoryTable);
+
+        panel.add(filterPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(bottomPanel, BorderLayout.SOUTH);
 
         btnGenerateMonth.addActionListener(e -> generateMonthlyFixedExpenses());
         btnSearch.addActionListener(e -> loadFixedExpenseHistoryByPeriod());
@@ -151,56 +240,100 @@ public class ExpenseFrame extends JFrame {
     }
 
     private JPanel createVariableExpensePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout(0, 16));
+        panel.setBackground(LIGHT_GRAY);
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
 
-        JPanel formPanel = new JPanel(new GridLayout(2, 5, 10, 10));
-        formPanel.setBorder(BorderFactory.createTitledBorder("Cadastrar despesa variável"));
+        JPanel topContainer = new JPanel(new BorderLayout(0, 12));
+        topContainer.setBackground(LIGHT_GRAY);
 
-        txtVariableName = new JTextField();
-        txtVariableAmount = new JTextField();
-        txtVariableDate = new JTextField();
-        txtVariableDescription = new JTextField();
+        JPanel formPanel = createCardPanel();
+        formPanel.setLayout(null);
+        formPanel.setPreferredSize(new Dimension(1000, 125));
 
-        JButton btnSave = new JButton("Cadastrar");
+        JLabel title = createSectionTitle("Cadastrar despesa variável");
+        title.setBounds(18, 12, 340, 25);
+        formPanel.add(title);
 
-        formPanel.add(new JLabel("Nome:"));
-        formPanel.add(new JLabel("Valor:"));
-        formPanel.add(new JLabel("Data (dd/MM/yyyy):"));
-        formPanel.add(new JLabel("Descrição:"));
-        formPanel.add(new JLabel("Ações:"));
+        JLabel nameLabel = createFieldLabel("Nome");
+        nameLabel.setBounds(18, 48, 160, 22);
+        formPanel.add(nameLabel);
 
+        txtVariableName = createTextField();
+        txtVariableName.setBounds(18, 72, 230, 34);
         formPanel.add(txtVariableName);
+
+        JLabel amountLabel = createFieldLabel("Valor");
+        amountLabel.setBounds(270, 48, 120, 22);
+        formPanel.add(amountLabel);
+
+        txtVariableAmount = createTextField();
+        txtVariableAmount.setBounds(270, 72, 130, 34);
         formPanel.add(txtVariableAmount);
+
+        JLabel dateLabel = createFieldLabel("Data");
+        dateLabel.setBounds(420, 48, 120, 22);
+        formPanel.add(dateLabel);
+
+        txtVariableDate = createTextField();
+        txtVariableDate.setBounds(420, 72, 145, 34);
         formPanel.add(txtVariableDate);
+
+        JLabel descriptionLabel = createFieldLabel("Descrição");
+        descriptionLabel.setBounds(585, 48, 160, 22);
+        formPanel.add(descriptionLabel);
+
+        txtVariableDescription = createTextField();
+        txtVariableDescription.setBounds(585, 72, 260, 34);
         formPanel.add(txtVariableDescription);
+
+        JButton btnSave = createPrimaryButton("Cadastrar");
+        btnSave.setBounds(870, 70, 135, 38);
         formPanel.add(btnSave);
 
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        filterPanel.setBorder(BorderFactory.createTitledBorder("Listar despesas variáveis por período"));
+        JPanel filterPanel = createCardPanel();
+        filterPanel.setLayout(null);
+        filterPanel.setPreferredSize(new Dimension(1000, 85));
 
-        txtVariableStartDate = new JTextField(10);
-        txtVariableEndDate = new JTextField(10);
+        JLabel filterTitle = createSectionTitle("Listar despesas variáveis por período");
+        filterTitle.setBounds(18, 10, 330, 25);
+        filterPanel.add(filterTitle);
 
-        JButton btnSearch = new JButton("Buscar");
-        JButton btnMarkPaid = new JButton("Marcar como Paga");
-        JButton btnDelete = new JButton("Excluir Selecionada");
+        JLabel startLabel = createFieldLabel("Inicial");
+        startLabel.setBounds(18, 42, 80, 22);
+        filterPanel.add(startLabel);
 
-        filterPanel.add(new JLabel("Inicial:"));
+        txtVariableStartDate = createTextField();
+        txtVariableStartDate.setBounds(75, 38, 130, 34);
         filterPanel.add(txtVariableStartDate);
-        filterPanel.add(new JLabel("Final:"));
+
+        JLabel endLabel = createFieldLabel("Final");
+        endLabel.setBounds(225, 42, 80, 22);
+        filterPanel.add(endLabel);
+
+        txtVariableEndDate = createTextField();
+        txtVariableEndDate.setBounds(275, 38, 130, 34);
         filterPanel.add(txtVariableEndDate);
+
+        JButton btnSearch = createDarkButton("Buscar");
+        btnSearch.setBounds(430, 36, 110, 38);
         filterPanel.add(btnSearch);
+
+        JButton btnMarkPaid = createPrimaryButton("Marcar como Paga");
+        btnMarkPaid.setBounds(555, 36, 170, 38);
         filterPanel.add(btnMarkPaid);
+
+        JButton btnDelete = createDangerButton("Excluir Selecionada");
+        btnDelete.setBounds(740, 36, 175, 38);
         filterPanel.add(btnDelete);
 
-        JPanel northPanel = new JPanel(new BorderLayout());
-        northPanel.add(formPanel, BorderLayout.NORTH);
-        northPanel.add(filterPanel, BorderLayout.SOUTH);
+        topContainer.add(formPanel, BorderLayout.NORTH);
+        topContainer.add(filterPanel, BorderLayout.SOUTH);
 
-        variableExpenseTable = new JTable();
-        JScrollPane scrollPane = new JScrollPane(variableExpenseTable);
+        variableExpenseTable = createStyledTable();
+        JScrollPane scrollPane = createTableScroll(variableExpenseTable);
 
-        panel.add(northPanel, BorderLayout.NORTH);
+        panel.add(topContainer, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
 
         btnSave.addActionListener(e -> saveVariableExpense());
@@ -247,7 +380,7 @@ public class ExpenseFrame extends JFrame {
     private void loadFixedExpenses() {
         List<FixedExpense> expenses = fixedExpenseDAO.findAll();
 
-        DefaultTableModel model = new DefaultTableModel();
+        DefaultTableModel model = createTableModel();
         model.addColumn("ID");
         model.addColumn("Nome");
         model.addColumn("Valor");
@@ -335,7 +468,7 @@ public class ExpenseFrame extends JFrame {
 
             List<FixedExpenseHistory> expenses = fixedExpenseHistoryDAO.findByPeriod(start, end);
 
-            DefaultTableModel model = new DefaultTableModel();
+            DefaultTableModel model = createTableModel();
             model.addColumn("ID");
             model.addColumn("ID Fixa");
             model.addColumn("Nome");
@@ -426,7 +559,7 @@ public class ExpenseFrame extends JFrame {
 
             List<VariableExpense> expenses = variableExpenseDAO.findByPeriod(start, end);
 
-            DefaultTableModel model = new DefaultTableModel();
+            DefaultTableModel model = createTableModel();
             model.addColumn("ID");
             model.addColumn("Nome");
             model.addColumn("Valor");
@@ -488,6 +621,102 @@ public class ExpenseFrame extends JFrame {
             loadVariableExpensesByPeriod();
             showSuccess("Despesa variável excluída com sucesso!");
         }
+    }
+
+    private JPanel createCardPanel() {
+        JPanel panel = new JPanel();
+        panel.setBackground(WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_GRAY),
+                BorderFactory.createEmptyBorder(12, 12, 12, 12)
+        ));
+        return panel;
+    }
+
+    private JLabel createSectionTitle(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(BLACK);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        return label;
+    }
+
+    private JLabel createFieldLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setForeground(TEXT_GRAY);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        return label;
+    }
+
+    private JTextField createTextField() {
+        JTextField field = new JTextField();
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_GRAY),
+                BorderFactory.createEmptyBorder(5, 8, 5, 8)
+        ));
+        return field;
+    }
+
+    private JTable createStyledTable() {
+        JTable table = new JTable();
+        table.setRowHeight(30);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        table.getTableHeader().setBackground(BLACK);
+        table.getTableHeader().setForeground(WHITE);
+        table.setSelectionBackground(new Color(255, 225, 205));
+        table.setSelectionForeground(BLACK);
+        table.setGridColor(new Color(235, 235, 235));
+        table.setShowVerticalLines(false);
+        return table;
+    }
+
+    private JScrollPane createTableScroll(JTable table) {
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER_GRAY));
+        scrollPane.getViewport().setBackground(WHITE);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(12);
+        return scrollPane;
+    }
+
+    private DefaultTableModel createTableModel() {
+        return new DefaultTableModel() {
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+    }
+
+    private JButton createPrimaryButton(String text) {
+        JButton button = baseButton(text);
+        button.setBackground(ORANGE);
+        button.setForeground(WHITE);
+        button.setBorderPainted(false);
+        return button;
+    }
+
+    private JButton createDarkButton(String text) {
+        JButton button = baseButton(text);
+        button.setBackground(BLACK);
+        button.setForeground(WHITE);
+        button.setBorderPainted(false);
+        return button;
+    }
+
+    private JButton createDangerButton(String text) {
+        JButton button = baseButton(text);
+        button.setBackground(RED);
+        button.setForeground(WHITE);
+        button.setBorderPainted(false);
+        return button;
+    }
+
+    private JButton baseButton(String text) {
+        JButton button = new JButton(text);
+        button.setFocusPainted(false);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
     }
 
     private void hideIdColumn(JTable table) {
