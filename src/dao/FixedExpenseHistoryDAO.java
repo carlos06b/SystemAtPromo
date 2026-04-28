@@ -14,33 +14,63 @@ import java.util.List;
 public class FixedExpenseHistoryDAO {
 
     public void generateMonthlyExpenses(int month, int year) {
-
         String selectSql = "SELECT * FROM fixed_expense";
-        String insertSql = "INSERT INTO fixed_expense_history " +
-                "(fixed_expense_id, name, amount, due_date, status, payment_date) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+
+        String checkSql = """
+            SELECT COUNT(*) AS total
+            FROM fixed_expense_history
+            WHERE fixed_expense_id = ?
+              AND MONTH(due_date) = ?
+              AND YEAR(due_date) = ?
+            """;
+
+        String insertSql = """
+            INSERT INTO fixed_expense_history
+            (fixed_expense_id, name, amount, due_date, status, payment_date)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement selectStmt = conn.prepareStatement(selectSql);
+             PreparedStatement checkStmt = conn.prepareStatement(checkSql);
              PreparedStatement insertStmt = conn.prepareStatement(insertSql)) {
 
             ResultSet rs = selectStmt.executeQuery();
 
             while (rs.next()) {
+                int fixedExpenseId = rs.getInt("id");
+
+                checkStmt.setInt(1, fixedExpenseId);
+                checkStmt.setInt(2, month);
+                checkStmt.setInt(3, year);
+
+                ResultSet checkRs = checkStmt.executeQuery();
+
+                if (checkRs.next() && checkRs.getInt("total") > 0) {
+                    continue;
+                }
 
                 LocalDate originalDueDate = rs.getDate("due_date").toLocalDate();
-
                 int day = originalDueDate.getDayOfMonth();
 
-                LocalDate dueDate = LocalDate.of(year, month, 1)
-                        .withDayOfMonth(Math.min(day, LocalDate.of(year, month, 1).lengthOfMonth()));
+                LocalDate baseDate = LocalDate.of(year, month, 1);
+                LocalDate dueDate = baseDate.withDayOfMonth(
+                        Math.min(day, baseDate.lengthOfMonth())
+                );
 
-                insertStmt.setInt(1, rs.getInt("id"));
+                insertStmt.setInt(1, fixedExpenseId);
                 insertStmt.setString(2, rs.getString("name"));
                 insertStmt.setBigDecimal(3, rs.getBigDecimal("amount"));
                 insertStmt.setDate(4, java.sql.Date.valueOf(dueDate));
-                insertStmt.setBoolean(5, false);
-                insertStmt.setNull(6, java.sql.Types.DATE);
+
+                boolean status = rs.getBoolean("status");
+                insertStmt.setBoolean(5, status);
+
+                if (rs.getDate("payment_date") != null) {
+                    insertStmt.setDate(6, rs.getDate("payment_date"));
+                } else {
+                    insertStmt.setNull(6, java.sql.Types.DATE);
+                }
 
                 insertStmt.executeUpdate();
             }

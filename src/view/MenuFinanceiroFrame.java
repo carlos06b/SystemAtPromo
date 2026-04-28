@@ -28,6 +28,7 @@ public class MenuFinanceiroFrame extends JFrame {
 
         JButton btnExpenses = new JButton("Despesas");
         btnExpenses.setBounds(100, 240, 200, 40);
+        btnExpenses.addActionListener(e -> new ExpenseFrame());
 
         setLayout(null);
         add(btnRequests);

@@ -8,7 +8,6 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
-
         Scanner sc = new Scanner(System.in);
 
         UserController userController = new UserController();
@@ -58,10 +57,7 @@ public class Main {
         sc.close();
     }
 
-    public static void menuRH(Scanner sc, User loggedUser,
-                              RequestController requestController,
-                              PromoterController promoterController) {
-
+    public static void menuRH(Scanner sc, User loggedUser, RequestController requestController, PromoterController promoterController) {
         int option;
 
         do {
@@ -83,7 +79,6 @@ public class Main {
     }
 
     public static void menuRHRequests(Scanner sc, User loggedUser, RequestController requestController) {
-
         int option;
 
         do {
@@ -107,7 +102,6 @@ public class Main {
     }
 
     public static void menuPromoters(Scanner sc, PromoterController promoterController) {
-
         int option;
 
         do {
@@ -134,14 +128,15 @@ public class Main {
         } while (option != 0);
     }
 
-    public static void menuFinanceiro(Scanner sc,
-                                      RequestController requestController,
-                                      FinanceController financeController,
-                                      FixedExpenseController fixedExpenseController,
-                                      FixedExpenseHistoryController fixedExpenseHistoryController,
-                                      VariableExpenseController variableExpenseController,
-                                      ReportController reportController) {
-
+    public static void menuFinanceiro(
+            Scanner sc,
+            RequestController requestController,
+            FinanceController financeController,
+            FixedExpenseController fixedExpenseController,
+            FixedExpenseHistoryController fixedExpenseHistoryController,
+            VariableExpenseController variableExpenseController,
+            ReportController reportController
+    ) {
         int option;
 
         do {
@@ -169,7 +164,6 @@ public class Main {
     }
 
     public static void menuFinanceRequests(Scanner sc, RequestController requestController) {
-
         int option;
 
         do {
@@ -197,7 +191,6 @@ public class Main {
     }
 
     public static void menuReports(Scanner sc, FinanceController financeController, ReportController reportController) {
-
         int option;
 
         do {
@@ -223,7 +216,6 @@ public class Main {
     }
 
     public static void menuFixedExpenses(Scanner sc, FixedExpenseController fixedExpenseController) {
-
         int option;
 
         do {
@@ -253,7 +245,6 @@ public class Main {
     }
 
     public static void menuFixedExpenseHistory(Scanner sc, FixedExpenseHistoryController controller) {
-
         int option;
 
         do {
@@ -287,16 +278,14 @@ public class Main {
     }
 
     public static void menuVariableExpenses(Scanner sc, VariableExpenseController controller) {
-
         int option;
 
         do {
             printTitle("DESPESAS VARIÁVEIS");
             System.out.println("1 - Cadastrar");
             System.out.println("2 - Listar por período");
-            System.out.println("3 - Listar por promotor");
-            System.out.println("4 - Marcar como paga");
-            System.out.println("5 - Excluir");
+            System.out.println("3 - Marcar como paga");
+            System.out.println("4 - Excluir");
             System.out.println("0 - Voltar");
 
             option = readInt(sc, "Escolha: ");
@@ -304,9 +293,8 @@ public class Main {
             switch (option) {
                 case 1 -> registerVariableExpense(sc, controller);
                 case 2 -> listVariableExpenseByPeriod(sc, controller);
-                case 3 -> controller.listByPromoter(readInt(sc, "ID do promotor: "));
-                case 4 -> markVariableExpenseAsPaid(sc, controller);
-                case 5 -> controller.delete(readInt(sc, "ID da despesa variável: "));
+                case 3 -> markVariableExpenseAsPaid(sc, controller);
+                case 4 -> controller.delete(readInt(sc, "ID da despesa variável: "));
                 case 0 -> printInfo("Voltando...");
                 default -> printError("Opção inválida.");
             }
@@ -315,10 +303,8 @@ public class Main {
     }
 
     public static void createRequest(Scanner sc, User loggedUser, RequestController controller) {
-
         int idFinanceiro = readInt(sc, "ID do usuário financeiro: ");
         int idPromoter = readInt(sc, "ID do promotor: ");
-
         String type = readType(sc, "Tipo (BONIFICACAO / AJUDA_CUSTO / DESCONTO): ");
         BigDecimal amount = readPositiveBigDecimal(sc, "Valor: ");
 
@@ -341,7 +327,6 @@ public class Main {
     }
 
     public static void registerPromoter(Scanner sc, PromoterController controller) {
-
         System.out.print("Nome: ");
         String name = sc.nextLine().trim();
 
@@ -364,7 +349,6 @@ public class Main {
     }
 
     public static void updatePromoter(Scanner sc, PromoterController controller) {
-
         int id = readInt(sc, "ID do promotor: ");
 
         System.out.print("Novo nome: ");
@@ -385,7 +369,6 @@ public class Main {
     }
 
     public static void registerFixedExpense(Scanner sc, FixedExpenseController controller) {
-
         System.out.print("Nome da despesa: ");
         String name = sc.nextLine().trim();
 
@@ -403,11 +386,11 @@ public class Main {
     public static void markFixedExpenseAsPaid(Scanner sc, FixedExpenseController controller) {
         int id = readInt(sc, "ID da despesa fixa: ");
         LocalDate paymentDate = readDate(sc, "Data de pagamento (AAAA-MM-DD): ");
+
         controller.markAsPaid(id, paymentDate);
     }
 
     public static void registerVariableExpense(Scanner sc, VariableExpenseController controller) {
-
         System.out.print("Nome da despesa: ");
         String name = sc.nextLine().trim();
 
@@ -417,7 +400,6 @@ public class Main {
         }
 
         BigDecimal amount = readPositiveBigDecimal(sc, "Valor: ");
-        int idPromoter = readInt(sc, "ID do promotor: ");
         LocalDate date = readDate(sc, "Data da despesa (AAAA-MM-DD): ");
 
         System.out.print("Descrição: ");
@@ -427,7 +409,7 @@ public class Main {
             description = "Sem descrição";
         }
 
-        controller.register(name, amount, idPromoter, date, description);
+        controller.registerVariableExpense(name, amount, date, description);
     }
 
     public static void listVariableExpenseByPeriod(Scanner sc, VariableExpenseController controller) {
@@ -442,7 +424,8 @@ public class Main {
     public static void markVariableExpenseAsPaid(Scanner sc, VariableExpenseController controller) {
         int id = readInt(sc, "ID da despesa variável: ");
         LocalDate paymentDate = readDate(sc, "Data de pagamento (AAAA-MM-DD): ");
-        controller.markAsPaid(id, paymentDate);
+
+        controller.markAsPaid(id);
     }
 
     public static void listRequestsByPeriod(Scanner sc, RequestController controller) {
@@ -511,6 +494,7 @@ public class Main {
     public static void markFixedExpenseHistoryAsPaid(Scanner sc, FixedExpenseHistoryController controller) {
         int id = readInt(sc, "ID da despesa fixa mensal: ");
         LocalDate paymentDate = readDate(sc, "Data de pagamento (AAAA-MM-DD): ");
+
         controller.markAsPaid(id, paymentDate);
     }
 
@@ -537,7 +521,9 @@ public class Main {
     public static int readMonth(Scanner sc) {
         while (true) {
             int month = readInt(sc, "Mês (1-12): ");
+
             if (month >= 1 && month <= 12) return month;
+
             printError("Mês inválido. Digite um número entre 1 e 12.");
         }
     }
@@ -545,7 +531,9 @@ public class Main {
     public static int readYear(Scanner sc) {
         while (true) {
             int year = readInt(sc, "Ano: ");
+
             if (year >= 2000 && year <= 2100) return year;
+
             printError("Ano inválido.");
         }
     }

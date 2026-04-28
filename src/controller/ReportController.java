@@ -7,21 +7,28 @@ import dao.VariableExpenseDAO;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 public class ReportController {
 
-    private FinancePromoterDAO financePromoterDAO = new FinancePromoterDAO();
-    private FixedExpenseHistoryDAO fixedExpenseHistoryDAO = new FixedExpenseHistoryDAO();
-    private VariableExpenseDAO variableExpenseDAO = new VariableExpenseDAO();
+    private final FinancePromoterDAO financePromoterDAO = new FinancePromoterDAO();
+    private final FixedExpenseHistoryDAO fixedExpenseHistoryDAO = new FixedExpenseHistoryDAO();
+    private final VariableExpenseDAO variableExpenseDAO = new VariableExpenseDAO();
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public void showGeneralReport(LocalDate start, LocalDate end) {
+        if (start == null || end == null) {
+            System.out.println("Erro: informe a data inicial e final.");
+            return;
+        }
 
         if (start.isAfter(end)) {
             System.out.println("Erro: data inicial maior que final.");
             return;
         }
 
-        var totals = financePromoterDAO.getTotalByTypeAndPeriod(start, end);
+        Map<String, BigDecimal> totals = financePromoterDAO.getTotalByTypeAndPeriod(start, end);
 
         BigDecimal gastosPromotores = BigDecimal.ZERO;
 
@@ -50,20 +57,16 @@ public class ReportController {
         System.out.println("\n=== RELATÓRIO GERAL DA EMPRESA ===");
         System.out.println("Período: " + formatDate(start) + " até " + formatDate(end));
         System.out.println("----------------------------------");
-
         System.out.println("Financeiro dos promotores: R$ " + gastosPromotores);
-        System.out.println("Despesas fixas:           R$ " + fixedTotal);
-        System.out.println("Despesas variáveis:       R$ " + variableTotal);
-
+        System.out.println("Despesas fixas: R$ " + fixedTotal);
+        System.out.println("Despesas variáveis: R$ " + variableTotal);
         System.out.println("----------------------------------");
-        System.out.println("Descontos aplicados:      R$ " + descontos);
+        System.out.println("Descontos aplicados: R$ " + descontos);
         System.out.println("----------------------------------");
-
-        System.out.println("TOTAL REAL DE GASTOS:     R$ " + totalGeral);
+        System.out.println("TOTAL REAL DE GASTOS: R$ " + totalGeral);
     }
 
     private String formatDate(LocalDate date) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         return date.format(formatter);
     }
 }

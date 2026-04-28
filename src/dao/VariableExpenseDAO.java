@@ -14,42 +14,44 @@ import java.util.List;
 public class VariableExpenseDAO {
 
     public void save(VariableExpense expense) {
-
-        String sql = "INSERT INTO variable_expense " +
-                "(name, amount, id_promoter, date, status, payment_date, description) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = """
+                INSERT INTO variable_expense
+                (name, amount, date, status, payment_date, description)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, expense.getName());
             stmt.setBigDecimal(2, expense.getAmount());
-            stmt.setInt(3, expense.getIdPromoter());
-            stmt.setDate(4, java.sql.Date.valueOf(expense.getDate()));
-            stmt.setBoolean(5, expense.isStatus());
+            stmt.setDate(3, java.sql.Date.valueOf(expense.getDate()));
+            stmt.setBoolean(4, expense.isStatus());
 
             if (expense.getPaymentDate() != null) {
-                stmt.setDate(6, java.sql.Date.valueOf(expense.getPaymentDate()));
+                stmt.setDate(5, java.sql.Date.valueOf(expense.getPaymentDate()));
             } else {
-                stmt.setNull(6, java.sql.Types.DATE);
+                stmt.setNull(5, java.sql.Types.DATE);
             }
 
-            stmt.setString(7, expense.getDescription());
+            stmt.setString(6, expense.getDescription());
 
             stmt.executeUpdate();
-
-            System.out.println("Despesa variável cadastrada com sucesso!");
 
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public List<VariableExpense> findByPeriod(java.time.LocalDate start, java.time.LocalDate end) {
+    public List<VariableExpense> findByPeriod(LocalDate start, LocalDate end) {
+        List<VariableExpense> expenses = new ArrayList<>();
 
-        List<VariableExpense> list = new ArrayList<>();
-
-        String sql = "SELECT * FROM variable_expense WHERE date BETWEEN ? AND ?";
+        String sql = """
+                SELECT *
+                FROM variable_expense
+                WHERE date BETWEEN ? AND ?
+                ORDER BY date DESC
+                """;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -60,108 +62,38 @@ public class VariableExpenseDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                list.add(buildVariableExpense(rs));
+                VariableExpense expense = new VariableExpense();
+
+                expense.setId(rs.getInt("id"));
+                expense.setName(rs.getString("name"));
+                expense.setAmount(rs.getBigDecimal("amount"));
+                expense.setDate(rs.getDate("date").toLocalDate());
+                expense.setStatus(rs.getBoolean("status"));
+
+                if (rs.getDate("payment_date") != null) {
+                    expense.setPaymentDate(rs.getDate("payment_date").toLocalDate());
+                } else {
+                    expense.setPaymentDate(null);
+                }
+
+                expense.setDescription(rs.getString("description"));
+
+                expenses.add(expense);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return list;
-    }
-
-    public List<VariableExpense> findByPromoter(int idPromoter) {
-
-        List<VariableExpense> list = new ArrayList<>();
-
-        String sql = "SELECT * FROM variable_expense WHERE id_promoter = ?";
-
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, idPromoter);
-
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                list.add(buildVariableExpense(rs));
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return list;
-    }
-
-    public void markAsPaid(int id, java.time.LocalDate paymentDate) {
-
-        String sql = "UPDATE variable_expense SET status = true, payment_date = ? WHERE id = ?";
-
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setDate(1, java.sql.Date.valueOf(paymentDate));
-            stmt.setInt(2, id);
-
-            int rows = stmt.executeUpdate();
-
-            if (rows > 0) {
-                System.out.println("Despesa variável marcada como paga!");
-            } else {
-                System.out.println("Despesa variável não encontrada.");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void delete(int id) {
-
-        String sql = "DELETE FROM variable_expense WHERE id = ?";
-
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, id);
-
-            int rows = stmt.executeUpdate();
-
-            if (rows > 0) {
-                System.out.println("Despesa variável excluída!");
-            } else {
-                System.out.println("Despesa variável não encontrada.");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private VariableExpense buildVariableExpense(ResultSet rs) throws Exception {
-
-        VariableExpense expense = new VariableExpense();
-
-        expense.setId(rs.getInt("id"));
-        expense.setName(rs.getString("name"));
-        expense.setAmount(rs.getBigDecimal("amount"));
-        expense.setIdPromoter(rs.getInt("id_promoter"));
-        expense.setDate(rs.getDate("date").toLocalDate());
-        expense.setStatus(rs.getBoolean("status"));
-
-        if (rs.getDate("payment_date") != null) {
-            expense.setPaymentDate(rs.getDate("payment_date").toLocalDate());
-        }
-
-        expense.setDescription(rs.getString("description"));
-
-        return expense;
+        return expenses;
     }
 
     public BigDecimal getTotalByPeriod(LocalDate start, LocalDate end) {
-
-        String sql = "SELECT SUM(amount) AS total FROM variable_expense WHERE date BETWEEN ? AND ?";
+        String sql = """
+                SELECT SUM(amount) AS total
+                FROM variable_expense
+                WHERE date BETWEEN ? AND ?
+                """;
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -181,5 +113,40 @@ public class VariableExpenseDAO {
         }
 
         return BigDecimal.ZERO;
+    }
+
+    public void markAsPaid(int id, LocalDate paymentDate) {
+        String sql = """
+                UPDATE variable_expense
+                SET status = ?, payment_date = ?
+                WHERE id = ?
+                """;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setBoolean(1, true);
+            stmt.setDate(2, java.sql.Date.valueOf(paymentDate));
+            stmt.setInt(3, id);
+
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void delete(int id) {
+        String sql = "DELETE FROM variable_expense WHERE id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

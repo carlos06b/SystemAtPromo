@@ -8,7 +8,6 @@ public class VariableExpense {
     private int id;
     private String name;
     private BigDecimal amount;
-    private int idPromoter;
     private LocalDate date;
     private boolean status;
     private LocalDate paymentDate;
@@ -24,9 +23,6 @@ public class VariableExpense {
 
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }
-
-    public int getIdPromoter() { return idPromoter; }
-    public void setIdPromoter(int idPromoter) { this.idPromoter = idPromoter; }
 
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }

@@ -1,6 +1,5 @@
 package controller;
 
-import dao.PromoterDAO;
 import dao.VariableExpenseDAO;
 import model.VariableExpense;
 
@@ -10,81 +9,61 @@ import java.util.List;
 
 public class VariableExpenseController {
 
-    private VariableExpenseDAO dao = new VariableExpenseDAO();
-    private PromoterDAO promoterDAO = new PromoterDAO();
+    private final VariableExpenseDAO variableExpenseDAO = new VariableExpenseDAO();
 
-    public void register(String name, BigDecimal amount, int idPromoter,
-                         LocalDate date, String description) {
+    public void registerVariableExpense(String name,
+                                        BigDecimal amount,
+                                        LocalDate date,
+                                        String description) {
 
-        if (promoterDAO.findById(idPromoter) == null) {
-            System.out.println("Promotor não existe.");
-            return;
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("O nome da despesa variável é obrigatório.");
+        }
+
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("O valor da despesa deve ser maior que zero.");
+        }
+
+        if (date == null) {
+            throw new IllegalArgumentException("A data da despesa é obrigatória.");
         }
 
         VariableExpense expense = new VariableExpense();
-
-        expense.setName(name);
+        expense.setName(name.trim());
         expense.setAmount(amount);
-        expense.setIdPromoter(idPromoter);
         expense.setDate(date);
         expense.setStatus(false);
         expense.setPaymentDate(null);
-        expense.setDescription(description);
+        expense.setDescription(description == null ? "" : description.trim());
 
-        dao.save(expense);
+        variableExpenseDAO.save(expense);
     }
 
-    public void listByPeriod(LocalDate start, LocalDate end) {
+    public List<VariableExpense> listByPeriod(LocalDate start, LocalDate end) {
+        if (start == null || end == null) {
+            throw new IllegalArgumentException("Informe a data inicial e final.");
+        }
 
         if (start.isAfter(end)) {
-            System.out.println("Erro: data inicial maior que final.");
-            return;
+            throw new IllegalArgumentException("A data inicial não pode ser maior que a data final.");
         }
 
-        List<VariableExpense> list = dao.findByPeriod(start, end);
-
-        if (list.isEmpty()) {
-            System.out.println("Nenhuma despesa variável nesse período.");
-            return;
-        }
-
-        for (VariableExpense e : list) {
-            printExpense(e);
-        }
+        return variableExpenseDAO.findByPeriod(start, end);
     }
 
-    public void listByPromoter(int idPromoter) {
-
-        List<VariableExpense> list = dao.findByPromoter(idPromoter);
-
-        if (list.isEmpty()) {
-            System.out.println("Nenhuma despesa variável para esse promotor.");
-            return;
+    public void markAsPaid(int id) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID da despesa inválido.");
         }
 
-        for (VariableExpense e : list) {
-            printExpense(e);
-        }
-    }
-
-    public void markAsPaid(int id, LocalDate paymentDate) {
-        dao.markAsPaid(id, paymentDate);
+        variableExpenseDAO.markAsPaid(id, LocalDate.now());
     }
 
     public void delete(int id) {
-        dao.delete(id);
-    }
+        if (id <= 0) {
+            throw new IllegalArgumentException("ID da despesa inválido.");
+        }
 
-    private void printExpense(VariableExpense e) {
-        System.out.println(
-                e.getId() + " | " +
-                        e.getName() + " | " +
-                        "Promotor: " + e.getIdPromoter() + " | " +
-                        "R$ " + e.getAmount() + " | " +
-                        e.getDate() + " | " +
-                        (e.isStatus() ? "PAGO" : "PENDENTE") + " | " +
-                        "Pagamento: " + e.getPaymentDate() + " | " +
-                        e.getDescription()
-        );
+        variableExpenseDAO.delete(id);
     }
 }
