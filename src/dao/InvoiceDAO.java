@@ -2,6 +2,7 @@ package dao;
 
 import database.ConnectionFactory;
 import model.Invoice;
+import model.InvoiceView;
 
 import java.sql.*;
 import java.time.LocalDate;
@@ -32,15 +33,46 @@ public class InvoiceDAO {
         }
     }
 
-    public List<Invoice> findByPeriod(LocalDate start, LocalDate end) {
+    public Invoice findById(int id) {
+        String sql = "SELECT * FROM invoice WHERE id = ?";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return mapResultSetToInvoice(rs);
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao buscar faturamento por ID", e);
+        }
+
+        return null;
+    }
+
+    public List<InvoiceView> findViewByPeriod(LocalDate start, LocalDate end) {
         String sql = """
-                SELECT *
-                FROM invoice
-                WHERE due_date BETWEEN ? AND ?
-                ORDER BY due_date
+                SELECT 
+                    i.id,
+                    c.name AS client_name,
+                    c.company_link,
+                    i.amount,
+                    i.description,
+                    i.due_date,
+                    i.issue_date,
+                    i.payment_date,
+                    i.status
+                FROM invoice i
+                INNER JOIN client c ON i.id_client = c.id
+                WHERE i.due_date BETWEEN ? AND ?
+                ORDER BY i.due_date, c.name
                 """;
 
-        List<Invoice> invoices = new ArrayList<>();
+        List<InvoiceView> invoices = new ArrayList<>();
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -51,7 +83,7 @@ public class InvoiceDAO {
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                invoices.add(mapResultSetToInvoice(rs));
+                invoices.add(mapResultSetToInvoiceView(rs));
             }
 
         } catch (SQLException e) {
@@ -61,52 +93,90 @@ public class InvoiceDAO {
         return invoices;
     }
 
-    public List<Invoice> findPendingByPeriod(LocalDate start, LocalDate end) {
-        String sql = """
-                SELECT *
-                FROM invoice
-                WHERE due_date BETWEEN ? AND ?
-                AND status = 'PENDENTE'
-                ORDER BY due_date
-                """;
+    public List<InvoiceView> findViewByFilters(LocalDate start, LocalDate end, String status, String companyLink) {
+        StringBuilder sql = new StringBuilder("""
+                SELECT 
+                    i.id,
+                    c.name AS client_name,
+                    c.company_link,
+                    i.amount,
+                    i.description,
+                    i.due_date,
+                    i.issue_date,
+                    i.payment_date,
+                    i.status
+                FROM invoice i
+                INNER JOIN client c ON i.id_client = c.id
+                WHERE i.due_date BETWEEN ? AND ?
+                """);
 
-        List<Invoice> invoices = new ArrayList<>();
+        if (status != null && !status.equals("Todos")) {
+            sql.append(" AND i.status = ? ");
+        }
+
+        if (companyLink != null && !companyLink.equals("Todos")) {
+            sql.append(" AND c.company_link = ? ");
+        }
+
+        sql.append(" ORDER BY i.due_date, c.name ");
+
+        List<InvoiceView> invoices = new ArrayList<>();
 
         try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            stmt.setDate(1, Date.valueOf(start));
-            stmt.setDate(2, Date.valueOf(end));
+            int index = 1;
+
+            stmt.setDate(index++, Date.valueOf(start));
+            stmt.setDate(index++, Date.valueOf(end));
+
+            if (status != null && !status.equals("Todos")) {
+                stmt.setString(index++, status);
+            }
+
+            if (companyLink != null && !companyLink.equals("Todos")) {
+                stmt.setString(index, companyLink);
+            }
 
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()) {
-                invoices.add(mapResultSetToInvoice(rs));
+                invoices.add(mapResultSetToInvoiceView(rs));
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao buscar faturamentos pendentes", e);
+            throw new RuntimeException("Erro ao filtrar faturamentos", e);
         }
 
         return invoices;
     }
 
-    public List<Invoice> findIssuedNotPaid() {
+    public List<InvoiceView> findIssuedNotPaid() {
         String sql = """
-                SELECT *
-                FROM invoice
-                WHERE status = 'FATURADO'
-                ORDER BY issue_date
+                SELECT 
+                    i.id,
+                    c.name AS client_name,
+                    c.company_link,
+                    i.amount,
+                    i.description,
+                    i.due_date,
+                    i.issue_date,
+                    i.payment_date,
+                    i.status
+                FROM invoice i
+                INNER JOIN client c ON i.id_client = c.id
+                WHERE i.status = 'FATURADO'
+                ORDER BY i.issue_date, c.name
                 """;
 
-        List<Invoice> invoices = new ArrayList<>();
+        List<InvoiceView> invoices = new ArrayList<>();
 
         try (Connection conn = ConnectionFactory.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                invoices.add(mapResultSetToInvoice(rs));
+                invoices.add(mapResultSetToInvoiceView(rs));
             }
 
         } catch (SQLException e) {
@@ -132,7 +202,7 @@ public class InvoiceDAO {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao marcar como faturado", e);
+            throw new RuntimeException("Erro ao marcar faturamento como emitido", e);
         }
     }
 
@@ -154,29 +224,8 @@ public class InvoiceDAO {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erro ao marcar como pago", e);
+            throw new RuntimeException("Erro ao marcar faturamento como pago", e);
         }
-    }
-
-    public Invoice findById(int id) {
-        String sql = "SELECT * FROM invoice WHERE id = ?";
-
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, id);
-
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                return mapResultSetToInvoice(rs);
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Erro ao buscar faturamento por ID", e);
-        }
-
-        return null;
     }
 
     private Invoice mapResultSetToInvoice(ResultSet rs) throws SQLException {
@@ -201,5 +250,30 @@ public class InvoiceDAO {
         invoice.setStatus(rs.getString("status"));
 
         return invoice;
+    }
+
+    private InvoiceView mapResultSetToInvoiceView(ResultSet rs) throws SQLException {
+        InvoiceView invoiceView = new InvoiceView();
+
+        invoiceView.setId(rs.getInt("id"));
+        invoiceView.setClientName(rs.getString("client_name"));
+        invoiceView.setCompanyLink(rs.getString("company_link"));
+        invoiceView.setAmount(rs.getBigDecimal("amount"));
+        invoiceView.setDescription(rs.getString("description"));
+        invoiceView.setDueDate(rs.getDate("due_date").toLocalDate());
+
+        Date issueDate = rs.getDate("issue_date");
+        if (issueDate != null) {
+            invoiceView.setIssueDate(issueDate.toLocalDate());
+        }
+
+        Date paymentDate = rs.getDate("payment_date");
+        if (paymentDate != null) {
+            invoiceView.setPaymentDate(paymentDate.toLocalDate());
+        }
+
+        invoiceView.setStatus(rs.getString("status"));
+
+        return invoiceView;
     }
 }

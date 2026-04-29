@@ -118,6 +118,12 @@ public class MenuFinanceiroFrame extends JFrame {
         ));
 
         cardsPanel.add(createMenuButton(
+                "Faturamento",
+                "Controlar cobranças, emissão e pagamentos",
+                e -> new InvoiceFrame()
+        ));
+
+        cardsPanel.add(createMenuButton(
                 "Folha de Pagamento",
                 "Visualizar salários, adicionais e descontos",
                 e -> new PayrollFrame()

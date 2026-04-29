@@ -4,6 +4,7 @@ import dao.ClientDAO;
 import dao.InvoiceDAO;
 import model.Client;
 import model.Invoice;
+import model.InvoiceView;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,30 +36,30 @@ public class InvoiceController {
         }
 
         if (dueDate == null) {
-            throw new RuntimeException("A data de faturamento é obrigatória.");
+            throw new RuntimeException("A data prevista de faturamento é obrigatória.");
         }
 
         Invoice invoice = new Invoice();
         invoice.setClientId(clientId);
         invoice.setAmount(amount);
-        invoice.setDescription(description);
+        invoice.setDescription(formatNullable(description));
         invoice.setDueDate(dueDate);
         invoice.setStatus("PENDENTE");
 
         invoiceDAO.save(invoice);
     }
 
-    public List<Invoice> listByPeriod(LocalDate start, LocalDate end) {
+    public List<InvoiceView> listByPeriod(LocalDate start, LocalDate end) {
         validatePeriod(start, end);
-        return invoiceDAO.findByPeriod(start, end);
+        return invoiceDAO.findViewByPeriod(start, end);
     }
 
-    public List<Invoice> listPendingByPeriod(LocalDate start, LocalDate end) {
+    public List<InvoiceView> listByFilters(LocalDate start, LocalDate end, String status, String companyLink) {
         validatePeriod(start, end);
-        return invoiceDAO.findPendingByPeriod(start, end);
+        return invoiceDAO.findViewByFilters(start, end, status, companyLink);
     }
 
-    public List<Invoice> listIssuedNotPaid() {
+    public List<InvoiceView> listIssuedNotPaid() {
         return invoiceDAO.findIssuedNotPaid();
     }
 
@@ -96,11 +97,19 @@ public class InvoiceController {
 
     private void validatePeriod(LocalDate start, LocalDate end) {
         if (start == null || end == null) {
-            throw new RuntimeException("Informe a data inicial e a data final.");
+            throw new RuntimeException("Informe a data inicial e final.");
         }
 
         if (end.isBefore(start)) {
             throw new RuntimeException("A data final não pode ser menor que a data inicial.");
         }
+    }
+
+    private String formatNullable(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+
+        return value.trim();
     }
 }
