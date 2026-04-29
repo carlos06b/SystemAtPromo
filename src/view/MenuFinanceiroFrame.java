@@ -95,7 +95,7 @@ public class MenuFinanceiroFrame extends JFrame {
         subtitle.setBounds(48, 78, 620, 30);
         panel.add(subtitle);
 
-        JPanel cardsPanel = new JPanel(new GridLayout(2, 2, 22, 22));
+        JPanel cardsPanel = new JPanel(new GridLayout(3, 2, 22, 22));
         cardsPanel.setBackground(LIGHT_GRAY);
         cardsPanel.setBounds(45, 135, 585, 290);
 
@@ -109,6 +109,12 @@ public class MenuFinanceiroFrame extends JFrame {
                 "Relatórios",
                 "Consultar relatórios financeiros por período",
                 e -> new ReportFrame()
+        ));
+
+        cardsPanel.add(createMenuButton(
+                "Clientes / Indústrias",
+                "Cadastrar e gerenciar indústrias atendidas",
+                e -> new ClientFrame().setVisible(true)
         ));
 
         cardsPanel.add(createMenuButton(
