@@ -27,3 +27,17 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### IntelliJ (completo)
+.idea/
+*.iml
+
+### Build Java
+target/
+
+### Arquivos sensíveis
+.env
+config.properties
+
+### Logs
+*.log
