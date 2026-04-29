@@ -6,17 +6,20 @@ import java.sql.SQLException;
 
 public class ConnectionFactory {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/db_atpromo";
-    private static final String USER = "root";
-    private static final String PASSWORD = "Cl@830320";
-
     public static Connection getConnection() {
-
         try {
-            return DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (SQLException e) {
-            throw new RuntimeException("Erro ao conectar: " + e.getMessage());
-        }
+            String url = System.getenv("DB_URL");
+            String user = System.getenv("DB_USER");
+            String password = System.getenv("DB_PASSWORD");
 
+            if (url == null || user == null || password == null) {
+                throw new RuntimeException("Variáveis de ambiente do banco não configuradas.");
+            }
+
+            return DriverManager.getConnection(url, user, password);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao conectar com o banco de dados", e);
+        }
     }
 }
