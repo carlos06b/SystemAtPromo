@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 public class ReportFrame extends JFrame {
 
@@ -19,6 +20,8 @@ public class ReportFrame extends JFrame {
     private JSpinner endSpinner;
     private JTextArea resultArea;
     private JLabel statusLabel;
+
+    private final DateTimeFormatter BR_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final Color ORANGE = new Color(255, 102, 0);
     private final Color BLACK = new Color(18, 18, 18);
@@ -128,7 +131,7 @@ public class ReportFrame extends JFrame {
         JPanel resultPanel = new JPanel(new BorderLayout());
         resultPanel.setBackground(WHITE);
         resultPanel.setBorder(BorderFactory.createLineBorder(BORDER_GRAY));
-        resultPanel.setBounds(30, 170, 925, 420);
+        resultPanel.setBounds(30, 170, 925, 500);
         main.add(resultPanel);
 
         JPanel resultHeader = new JPanel(new BorderLayout());
@@ -150,16 +153,17 @@ public class ReportFrame extends JFrame {
         resultArea = new JTextArea();
         resultArea.setEditable(false);
         resultArea.setFont(new Font("Consolas", Font.PLAIN, 14));
-        resultArea.setLineWrap(true);
-        resultArea.setWrapStyleWord(true);
+        resultArea.setLineWrap(false);
+        resultArea.setWrapStyleWord(false);
         resultArea.setBackground(WHITE);
         resultArea.setForeground(BLACK);
-        resultArea.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
-        resultArea.setText("Selecione o período e escolha um tipo de relatório.");
+        resultArea.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
+        resultArea.setText(getInitialMessage());
 
         JScrollPane scrollPane = new JScrollPane(resultArea);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(12);
+        scrollPane.getHorizontalScrollBar().setUnitIncrement(12);
         resultPanel.add(scrollPane, BorderLayout.CENTER);
 
         btnGeneral.addActionListener(e -> generateGeneralReport());
@@ -174,46 +178,164 @@ public class ReportFrame extends JFrame {
         LocalDate start = getStartDate();
         LocalDate end = getEndDate();
 
-        if (!validatePeriod(start, end)) return;
+        if (!validatePeriod(start, end)) {
+            return;
+        }
 
         String output = captureOutput(() -> reportController.showGeneralReport(start, end));
-        showOutput("Relatório geral gerado", output);
+        showOutput("Relatório geral gerado", "RELATÓRIO GERAL DA EMPRESA", start, end, output);
     }
 
     private void generateFinanceReport() {
         LocalDate start = getStartDate();
         LocalDate end = getEndDate();
 
-        if (!validatePeriod(start, end)) return;
+        if (!validatePeriod(start, end)) {
+            return;
+        }
 
         String output = captureOutput(() -> financeController.showReportByPeriod(start, end));
-        showOutput("Financeiro completo gerado", output);
+        showOutput("Financeiro completo gerado", "RELATÓRIO FINANCEIRO COMPLETO", start, end, output);
     }
 
     private void generateReportByType() {
         LocalDate start = getStartDate();
         LocalDate end = getEndDate();
 
-        if (!validatePeriod(start, end)) return;
+        if (!validatePeriod(start, end)) {
+            return;
+        }
 
         String output = captureOutput(() -> financeController.showReportByTypeAndPeriod(start, end));
-        showOutput("Relatório por tipo gerado", output);
+        showOutput("Relatório por tipo gerado", "RELATÓRIO POR TIPO", start, end, output);
     }
 
-    private void showOutput(String status, String output) {
-        resultArea.setText(output);
+    private void showOutput(String status, String title, LocalDate start, LocalDate end, String output) {
+        resultArea.setText(formatReport(title, start, end, output));
         resultArea.setCaretPosition(0);
         statusLabel.setText(status);
     }
 
+    private String formatReport(String title, LocalDate start, LocalDate end, String rawOutput) {
+        StringBuilder report = new StringBuilder();
+
+        report.append("============================================================\n");
+        report.append(centerText(title, 60)).append("\n");
+        report.append("============================================================\n\n");
+
+        report.append("Período analisado : ")
+                .append(start.format(BR_FORMAT))
+                .append(" até ")
+                .append(end.format(BR_FORMAT))
+                .append("\n");
+
+        report.append("Gerado em         : ")
+                .append(LocalDate.now().format(BR_FORMAT))
+                .append("\n\n");
+
+        report.append("------------------------------------------------------------\n");
+        report.append("RESUMO DO RELATÓRIO\n");
+        report.append("------------------------------------------------------------\n\n");
+
+        String cleanedOutput = cleanControllerOutput(rawOutput);
+
+        if (cleanedOutput.isBlank()) {
+            report.append("Nenhum dado encontrado para o período informado.\n");
+        } else {
+            report.append(cleanedOutput);
+        }
+
+        report.append("\n\n------------------------------------------------------------\n");
+        report.append("Observação: descontos são exibidos separadamente e não entram\n");
+        report.append("no total real de gastos da empresa.\n");
+        report.append("------------------------------------------------------------\n");
+
+        return report.toString();
+    }
+
+    private String cleanControllerOutput(String output) {
+        if (output == null || output.isBlank()) {
+            return "";
+        }
+
+        String[] lines = output.split("\\R");
+        StringBuilder cleaned = new StringBuilder();
+
+        for (String line : lines) {
+            String trimmed = line.trim();
+
+            if (trimmed.isBlank()) {
+                continue;
+            }
+
+            if (trimmed.startsWith("===")) {
+                continue;
+            }
+
+            if (trimmed.matches("-+")) {
+                cleaned.append("\n");
+                continue;
+            }
+
+            cleaned.append(formatLine(trimmed)).append("\n");
+        }
+
+        return cleaned.toString().trim();
+    }
+
+    private String formatLine(String line) {
+        if (line.contains(":")) {
+            String[] parts = line.split(":", 2);
+
+            String label = parts[0].trim();
+            String value = parts[1].trim();
+
+            return String.format("%-32s %s", label + ":", value);
+        }
+
+        return line;
+    }
+
+    private String centerText(String text, int width) {
+        if (text.length() >= width) {
+            return text;
+        }
+
+        int leftPadding = (width - text.length()) / 2;
+        return " ".repeat(leftPadding) + text;
+    }
+
+    private String getInitialMessage() {
+        return """
+                ============================================================
+                              ÁREA DE RELATÓRIOS FINANCEIROS
+                ============================================================
+
+                Selecione um período acima e escolha o tipo de relatório:
+
+                1. Relatório Geral
+                   Mostra uma visão resumida dos gastos da empresa.
+
+                2. Financeiro Completo
+                   Lista os lançamentos financeiros do período.
+
+                3. Por Tipo
+                   Agrupa os valores por tipo, como bonificação, ajuda de custo,
+                   ASO, EPI e descontos.
+
+                ------------------------------------------------------------
+                Os resultados aparecerão aqui após a geração do relatório.
+                ------------------------------------------------------------
+                """;
+    }
+
     private void clearResult() {
-        resultArea.setText("Selecione o período e escolha um tipo de relatório.");
+        resultArea.setText(getInitialMessage());
         statusLabel.setText("Aguardando geração");
     }
 
     private LocalDate getStartDate() {
         java.util.Date date = (java.util.Date) startSpinner.getValue();
-
         return date.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
@@ -221,7 +343,6 @@ public class ReportFrame extends JFrame {
 
     private LocalDate getEndDate() {
         java.util.Date date = (java.util.Date) endSpinner.getValue();
-
         return date.toInstant()
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();

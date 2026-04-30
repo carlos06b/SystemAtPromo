@@ -6,6 +6,7 @@ import model.Client;
 import model.InvoiceView;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
@@ -13,8 +14,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.Component;
 
 public class InvoiceFrame extends JFrame {
 
@@ -37,9 +36,14 @@ public class InvoiceFrame extends JFrame {
     private JTable table;
     private DefaultTableModel tableModel;
 
+    private JLabel lblPending;
+    private JLabel lblIssued;
+    private JLabel lblPaid;
+    private JLabel lblCanceled;
+
     public InvoiceFrame() {
         setTitle("Sistema At Promo - Faturamento");
-        setSize(1120, 680);
+        setSize(1120, 800);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -50,6 +54,7 @@ public class InvoiceFrame extends JFrame {
 
         createHeader(mainPanel);
         createFilterPanel(mainPanel);
+        createDashboard(mainPanel);
         createTable(mainPanel);
         createActionButtons(mainPanel);
 
@@ -70,10 +75,10 @@ public class InvoiceFrame extends JFrame {
         title.setBounds(30, 18, 400, 35);
         header.add(title);
 
-        JLabel subtitle = new JLabel("Controle de cobranças pendentes, faturadas e pagas");
+        JLabel subtitle = new JLabel("Controle de cobranças pendentes, faturadas, pagas e canceladas");
         subtitle.setForeground(new Color(210, 210, 210));
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        subtitle.setBounds(32, 55, 650, 25);
+        subtitle.setBounds(32, 55, 700, 25);
         header.add(subtitle);
 
         JPanel orangeLine = new JPanel();
@@ -137,6 +142,32 @@ public class InvoiceFrame extends JFrame {
         filterPanel.add(btnNew);
     }
 
+    private void createDashboard(JPanel panel) {
+        JPanel dashboard = new JPanel(null);
+        dashboard.setBackground(WHITE);
+        dashboard.setBounds(30, 230, 1040, 78);
+        dashboard.setBorder(BorderFactory.createLineBorder(new Color(225, 225, 225)));
+        panel.add(dashboard);
+
+        lblPending = createDashboardLabel("Pendente: R$ 0,00", 25);
+        lblIssued = createDashboardLabel("Faturado: R$ 0,00", 285);
+        lblPaid = createDashboardLabel("Pago: R$ 0,00", 545);
+        lblCanceled = createDashboardLabel("Cancelado: 0 registros", 805);
+
+        dashboard.add(lblPending);
+        dashboard.add(lblIssued);
+        dashboard.add(lblPaid);
+        dashboard.add(lblCanceled);
+    }
+
+    private JLabel createDashboardLabel(String text, int x) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        label.setForeground(BLACK);
+        label.setBounds(x, 25, 230, 30);
+        return label;
+    }
+
     private void createTable(JPanel panel) {
         tableModel = new DefaultTableModel(
                 new Object[]{
@@ -197,7 +228,7 @@ public class InvoiceFrame extends JFrame {
         header.setFont(new Font("Segoe UI", Font.BOLD, 13));
 
         JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBounds(30, 235, 1040, 330);
+        scrollPane.setBounds(30, 325, 1040, 310);
         panel.add(scrollPane);
 
         table.getColumnModel().getColumn(0).setMinWidth(0);
@@ -215,24 +246,23 @@ public class InvoiceFrame extends JFrame {
     }
 
     private void createActionButtons(JPanel panel) {
-
         JButton btnCancel = createDangerButton("Cancelar");
-        btnCancel.setBounds(300, 590, 160, 38);
+        btnCancel.setBounds(300, 655, 160, 38);
         btnCancel.addActionListener(e -> cancelInvoice());
         panel.add(btnCancel);
 
         JButton btnIssue = createPrimaryButton("Marcar como faturado");
-        btnIssue.setBounds(485, 590, 190, 38);
+        btnIssue.setBounds(485, 655, 190, 38);
         btnIssue.addActionListener(e -> markAsIssued());
         panel.add(btnIssue);
 
         JButton btnPaid = createPrimaryButton("Marcar como pago");
-        btnPaid.setBounds(690, 590, 170, 38);
+        btnPaid.setBounds(690, 655, 170, 38);
         btnPaid.addActionListener(e -> markAsPaid());
         panel.add(btnPaid);
 
         JButton btnClose = createDarkButton("Fechar");
-        btnClose.setBounds(880, 590, 190, 38);
+        btnClose.setBounds(880, 655, 190, 38);
         btnClose.addActionListener(e -> dispose());
         panel.add(btnClose);
     }
@@ -392,21 +422,12 @@ public class InvoiceFrame extends JFrame {
         }
     }
 
-    private int getSelectedInvoiceId() {
-        int row = table.getSelectedRow();
-
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Selecione um faturamento na tabela.");
-            return -1;
-        }
-
-        return (int) tableModel.getValueAt(row, 0);
-    }
-
     private void cancelInvoice() {
         int id = getSelectedInvoiceId();
 
-        if (id == -1) return;
+        if (id == -1) {
+            return;
+        }
 
         int confirm = JOptionPane.showConfirmDialog(
                 this,
@@ -426,6 +447,17 @@ public class InvoiceFrame extends JFrame {
         }
     }
 
+    private int getSelectedInvoiceId() {
+        int row = table.getSelectedRow();
+
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Selecione um faturamento na tabela.");
+            return -1;
+        }
+
+        return (int) tableModel.getValueAt(row, 0);
+    }
+
     private void fillTable(List<InvoiceView> invoices) {
         tableModel.setRowCount(0);
 
@@ -434,7 +466,7 @@ public class InvoiceFrame extends JFrame {
                     invoice.getId(),
                     invoice.getClientName(),
                     invoice.getCompanyLink(),
-                    "R$ " + invoice.getAmount(),
+                    formatMoney(invoice.getAmount()),
                     invoice.getDescription(),
                     formatDate(invoice.getDueDate()),
                     formatDate(invoice.getIssueDate()),
@@ -442,6 +474,44 @@ public class InvoiceFrame extends JFrame {
                     invoice.getStatus()
             });
         }
+
+        updateDashboard(invoices);
+    }
+
+    private void updateDashboard(List<InvoiceView> invoices) {
+        BigDecimal pending = BigDecimal.ZERO;
+        BigDecimal issued = BigDecimal.ZERO;
+        BigDecimal paid = BigDecimal.ZERO;
+        int canceledCount = 0;
+
+        for (InvoiceView invoice : invoices) {
+            if (invoice.getAmount() == null || invoice.getStatus() == null) {
+                continue;
+            }
+
+            switch (invoice.getStatus()) {
+                case "PENDENTE" -> pending = pending.add(invoice.getAmount());
+                case "FATURADO" -> issued = issued.add(invoice.getAmount());
+                case "PAGO" -> paid = paid.add(invoice.getAmount());
+                case "CANCELADO" -> canceledCount++;
+            }
+        }
+
+        lblPending.setText("Pendente: " + formatMoney(pending));
+        lblIssued.setText("Faturado: " + formatMoney(issued));
+        lblPaid.setText("Pago: " + formatMoney(paid));
+        lblCanceled.setText("Cancelado: " + canceledCount + " registros");
+    }
+
+    private String formatMoney(BigDecimal value) {
+        if (value == null) {
+            return "R$ 0,00";
+        }
+
+        return "R$ " + String.format("%,.2f", value)
+                .replace(",", "X")
+                .replace(".", ",")
+                .replace("X", ".");
     }
 
     private String formatDate(LocalDate date) {
@@ -484,7 +554,7 @@ public class InvoiceFrame extends JFrame {
 
     private JButton createDangerButton(String text) {
         JButton button = new JButton(text);
-        button.setBackground(new Color(180, 40, 40)); // vermelho
+        button.setBackground(new Color(180, 40, 40));
         button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorderPainted(false);

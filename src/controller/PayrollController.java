@@ -16,7 +16,6 @@ public class PayrollController {
     private FinancePromoterDAO financePromoterDAO = new FinancePromoterDAO();
 
     public String generatePayroll(LocalDate start, LocalDate end, String promoterType) {
-
         if (start.isAfter(end)) {
             return "Erro: data inicial não pode ser maior que a final.";
         }
@@ -36,17 +35,12 @@ public class PayrollController {
         report.append("------------------------------------------------------------\n\n");
 
         BigDecimal totalBase = BigDecimal.ZERO;
-        BigDecimal totalBonificacao = BigDecimal.ZERO;
-        BigDecimal totalAjudaCusto = BigDecimal.ZERO;
-        BigDecimal totalASO = BigDecimal.ZERO;
-        BigDecimal totalEPI = BigDecimal.ZERO;
         BigDecimal totalDesconto = BigDecimal.ZERO;
-        BigDecimal totalGeral = BigDecimal.ZERO;
+        BigDecimal totalLiquido = BigDecimal.ZERO;
 
         boolean found = false;
 
         for (Promoter promoter : promoters) {
-
             if (!promoter.isActive()) {
                 continue;
             }
@@ -64,14 +58,9 @@ public class PayrollController {
                     end
             );
 
-            BigDecimal bonificacao = BigDecimal.ZERO;
-            BigDecimal ajudaCusto = BigDecimal.ZERO;
-            BigDecimal aso = BigDecimal.ZERO;
-            BigDecimal epi = BigDecimal.ZERO;
             BigDecimal desconto = BigDecimal.ZERO;
 
             for (FinancePromoter finance : launches) {
-
                 String type = finance.getType();
                 BigDecimal amount = finance.getAmount();
 
@@ -79,12 +68,8 @@ public class PayrollController {
                     continue;
                 }
 
-                switch (type.toUpperCase()) {
-                    case "BONIFICACAO" -> bonificacao = bonificacao.add(amount);
-                    case "AJUDA_CUSTO" -> ajudaCusto = ajudaCusto.add(amount);
-                    case "ASO" -> aso = aso.add(amount);
-                    case "EPI" -> epi = epi.add(amount);
-                    case "DESCONTO" -> desconto = desconto.add(amount);
+                if ("DESCONTO".equalsIgnoreCase(type)) {
+                    desconto = desconto.add(amount);
                 }
             }
 
@@ -94,30 +79,17 @@ public class PayrollController {
                 baseSalary = BigDecimal.ZERO;
             }
 
-            BigDecimal totalToPay = baseSalary
-                    .add(bonificacao)
-                    .add(ajudaCusto)
-                    .add(aso)
-                    .add(epi)
-                    .subtract(desconto);
+            BigDecimal totalToPay = baseSalary.subtract(desconto);
 
             totalBase = totalBase.add(baseSalary);
-            totalBonificacao = totalBonificacao.add(bonificacao);
-            totalAjudaCusto = totalAjudaCusto.add(ajudaCusto);
-            totalASO = totalASO.add(aso);
-            totalEPI = totalEPI.add(epi);
             totalDesconto = totalDesconto.add(desconto);
-            totalGeral = totalGeral.add(totalToPay);
+            totalLiquido = totalLiquido.add(totalToPay);
 
             report.append("Promotor: ").append(promoter.getName()).append("\n");
             report.append("Tipo: ").append(promoter.getType()).append("\n");
             report.append("Salário/Base: R$ ").append(baseSalary).append("\n");
-            report.append("Bonificação: R$ ").append(bonificacao).append("\n");
-            report.append("Ajuda de Custo: R$ ").append(ajudaCusto).append("\n");
-            report.append("ASO: R$ ").append(aso).append("\n");
-            report.append("EPI: R$ ").append(epi).append("\n");
             report.append("Descontos: R$ ").append(desconto).append("\n");
-            report.append("TOTAL A PAGAR: R$ ").append(totalToPay).append("\n");
+            report.append("TOTAL LÍQUIDO A PAGAR: R$ ").append(totalToPay).append("\n");
             report.append("------------------------------------------------------------\n");
         }
 
@@ -127,13 +99,9 @@ public class PayrollController {
 
         report.append("\n=== RESUMO DA FOLHA ===\n");
         report.append("Total Salário/Base: R$ ").append(totalBase).append("\n");
-        report.append("Total Bonificação: R$ ").append(totalBonificacao).append("\n");
-        report.append("Total Ajuda de Custo: R$ ").append(totalAjudaCusto).append("\n");
-        report.append("Total ASO: R$ ").append(totalASO).append("\n");
-        report.append("Total EPI: R$ ").append(totalEPI).append("\n");
         report.append("Total Descontos: R$ ").append(totalDesconto).append("\n");
         report.append("------------------------------------------------------------\n");
-        report.append("TOTAL GERAL A PAGAR: R$ ").append(totalGeral).append("\n");
+        report.append("TOTAL LÍQUIDO DA FOLHA: R$ ").append(totalLiquido).append("\n");
 
         return report.toString();
     }
