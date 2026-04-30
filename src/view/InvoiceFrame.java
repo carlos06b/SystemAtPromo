@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.Component;
 
 public class InvoiceFrame extends JFrame {
 
@@ -107,7 +109,7 @@ public class InvoiceFrame extends JFrame {
         lblStatus.setBounds(295, 12, 120, 20);
         filterPanel.add(lblStatus);
 
-        cbStatusFilter = new JComboBox<>(new String[]{"Todos", "PENDENTE", "FATURADO", "PAGO"});
+        cbStatusFilter = new JComboBox<>(new String[]{"Todos", "PENDENTE", "FATURADO", "PAGO", "CANCELADO"});
         cbStatusFilter.setBounds(295, 38, 140, 32);
         filterPanel.add(cbStatusFilter);
 
@@ -154,6 +156,41 @@ public class InvoiceFrame extends JFrame {
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         table.setGridColor(new Color(230, 230, 230));
 
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(
+                    JTable table,
+                    Object value,
+                    boolean isSelected,
+                    boolean hasFocus,
+                    int row,
+                    int column
+            ) {
+                Component component = super.getTableCellRendererComponent(
+                        table, value, isSelected, hasFocus, row, column
+                );
+
+                String status = table.getValueAt(row, 8).toString();
+
+                if (isSelected) {
+                    component.setBackground(new Color(210, 230, 255));
+                    component.setForeground(Color.BLACK);
+                    return component;
+                }
+
+                switch (status) {
+                    case "PENDENTE" -> component.setBackground(new Color(255, 248, 220));
+                    case "FATURADO" -> component.setBackground(new Color(255, 235, 205));
+                    case "PAGO" -> component.setBackground(new Color(220, 245, 220));
+                    case "CANCELADO" -> component.setBackground(new Color(245, 220, 220));
+                    default -> component.setBackground(Color.WHITE);
+                }
+
+                component.setForeground(Color.BLACK);
+                return component;
+            }
+        });
+
         JTableHeader header = table.getTableHeader();
         header.setBackground(BLACK);
         header.setForeground(WHITE);
@@ -178,6 +215,12 @@ public class InvoiceFrame extends JFrame {
     }
 
     private void createActionButtons(JPanel panel) {
+
+        JButton btnCancel = createDangerButton("Cancelar");
+        btnCancel.setBounds(300, 590, 160, 38);
+        btnCancel.addActionListener(e -> cancelInvoice());
+        panel.add(btnCancel);
+
         JButton btnIssue = createPrimaryButton("Marcar como faturado");
         btnIssue.setBounds(485, 590, 190, 38);
         btnIssue.addActionListener(e -> markAsIssued());
@@ -360,6 +403,29 @@ public class InvoiceFrame extends JFrame {
         return (int) tableModel.getValueAt(row, 0);
     }
 
+    private void cancelInvoice() {
+        int id = getSelectedInvoiceId();
+
+        if (id == -1) return;
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Deseja cancelar este faturamento?",
+                "Confirmação",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                invoiceController.cancelInvoice(id);
+                JOptionPane.showMessageDialog(this, "Faturamento cancelado.");
+                loadInvoices();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private void fillTable(List<InvoiceView> invoices) {
         tableModel.setRowCount(0);
 
@@ -409,6 +475,17 @@ public class InvoiceFrame extends JFrame {
         JButton button = new JButton(text);
         button.setBackground(BLACK);
         button.setForeground(WHITE);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return button;
+    }
+
+    private JButton createDangerButton(String text) {
+        JButton button = new JButton(text);
+        button.setBackground(new Color(180, 40, 40)); // vermelho
+        button.setForeground(Color.WHITE);
         button.setFocusPainted(false);
         button.setBorderPainted(false);
         button.setFont(new Font("Segoe UI", Font.BOLD, 13));

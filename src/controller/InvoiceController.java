@@ -95,6 +95,20 @@ public class InvoiceController {
         invoiceDAO.markAsPaid(invoiceId, paymentDate);
     }
 
+    public void cancelInvoice(int id) {
+        Invoice invoice = invoiceDAO.findById(id);
+
+        if (invoice == null) {
+            throw new RuntimeException("Faturamento não encontrado.");
+        }
+
+        if ("PAGO".equals(invoice.getStatus())) {
+            throw new RuntimeException("Não é possível cancelar faturamento já pago.");
+        }
+
+        invoiceDAO.cancelInvoice(id);
+    }
+
     private void validatePeriod(LocalDate start, LocalDate end) {
         if (start == null || end == null) {
             throw new RuntimeException("Informe a data inicial e final.");

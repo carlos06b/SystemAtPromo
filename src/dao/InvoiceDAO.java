@@ -228,6 +228,25 @@ public class InvoiceDAO {
         }
     }
 
+    public void cancelInvoice(int id) {
+        String sql = """
+            UPDATE invoice
+            SET status = 'CANCELADO'
+            WHERE id = ?
+            AND status != 'PAGO'
+            """;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, id);
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Erro ao cancelar faturamento", e);
+        }
+    }
+
     private Invoice mapResultSetToInvoice(ResultSet rs) throws SQLException {
         Invoice invoice = new Invoice();
 
