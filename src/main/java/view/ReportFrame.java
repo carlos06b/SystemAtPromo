@@ -143,10 +143,21 @@ public class ReportFrame extends JFrame {
         resultTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
         resultHeader.add(resultTitle, BorderLayout.WEST);
 
+        JPanel rightHeaderPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightHeaderPanel.setBackground(WHITE);
+
         statusLabel = new JLabel("Aguardando geração");
         statusLabel.setForeground(TEXT_GRAY);
         statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        resultHeader.add(statusLabel, BorderLayout.EAST);
+
+        JButton btnExportExcel = createPrimaryButton("Exportar Excel");
+        btnExportExcel.setPreferredSize(new Dimension(140, 30));
+        btnExportExcel.addActionListener(e -> exportExcel());
+
+        rightHeaderPanel.add(statusLabel);
+        rightHeaderPanel.add(btnExportExcel);
+
+        resultHeader.add(rightHeaderPanel, BorderLayout.EAST);
 
         resultPanel.add(resultHeader, BorderLayout.NORTH);
 
@@ -172,6 +183,32 @@ public class ReportFrame extends JFrame {
         btnClear.addActionListener(e -> clearResult());
 
         return main;
+    }
+
+    private void exportExcel() {
+        String content = resultArea.getText();
+
+        if (content == null || content.isBlank() || content.contains("ÁREA DE RELATÓRIOS")) {
+            JOptionPane.showMessageDialog(this, "Gere um relatório antes de exportar.");
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setSelectedFile(new java.io.File("relatorio_financeiro.xlsx"));
+
+        int option = chooser.showSaveDialog(this);
+
+        if (option == JFileChooser.APPROVE_OPTION) {
+            String path = chooser.getSelectedFile().getAbsolutePath();
+
+            if (!path.toLowerCase().endsWith(".xlsx")) {
+                path += ".xlsx";
+            }
+
+            util.ExcelGenerator.generateTextReport(content, path);
+
+            JOptionPane.showMessageDialog(this, "Relatório exportado em Excel com sucesso.");
+        }
     }
 
     private void generateGeneralReport() {

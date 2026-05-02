@@ -246,23 +246,30 @@ public class InvoiceFrame extends JFrame {
     }
 
     private void createActionButtons(JPanel panel) {
+
         JButton btnCancel = createDangerButton("Cancelar");
-        btnCancel.setBounds(300, 655, 160, 38);
+        btnCancel.setBounds(200, 655, 150, 38);
         btnCancel.addActionListener(e -> cancelInvoice());
         panel.add(btnCancel);
 
-        JButton btnIssue = createPrimaryButton("Marcar como faturado");
-        btnIssue.setBounds(485, 655, 190, 38);
+        JButton btnIssue = createPrimaryButton("Faturar");
+        btnIssue.setBounds(360, 655, 150, 38);
         btnIssue.addActionListener(e -> markAsIssued());
         panel.add(btnIssue);
 
-        JButton btnPaid = createPrimaryButton("Marcar como pago");
-        btnPaid.setBounds(690, 655, 170, 38);
+        JButton btnPaid = createPrimaryButton("Pagar");
+        btnPaid.setBounds(520, 655, 150, 38);
         btnPaid.addActionListener(e -> markAsPaid());
         panel.add(btnPaid);
 
+        // 👉 NOVO BOTÃO
+        JButton btnExcel = createPrimaryButton("Exportar Excel");
+        btnExcel.setBounds(680, 655, 180, 38);
+        btnExcel.addActionListener(e -> exportExcel());
+        panel.add(btnExcel);
+
         JButton btnClose = createDarkButton("Fechar");
-        btnClose.setBounds(880, 655, 190, 38);
+        btnClose.setBounds(880, 655, 150, 38);
         btnClose.addActionListener(e -> dispose());
         panel.add(btnClose);
     }
@@ -550,6 +557,39 @@ public class InvoiceFrame extends JFrame {
         button.setFont(new Font("Segoe UI", Font.BOLD, 13));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         return button;
+    }
+
+    private void exportExcel() {
+        try {
+            LocalDate start = parseBrazilianDate(txtStartDate.getText());
+            LocalDate end = parseBrazilianDate(txtEndDate.getText());
+
+            String status = cbStatusFilter.getSelectedItem().toString();
+            String company = cbCompanyFilter.getSelectedItem().toString();
+
+            List<InvoiceView> invoices = invoiceController.listByFilters(start, end, status, company);
+
+            if (invoices.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Nenhum dado para exportar.");
+                return;
+            }
+
+            JFileChooser chooser = new JFileChooser();
+            chooser.setSelectedFile(new java.io.File("faturamento.xlsx"));
+
+            int option = chooser.showSaveDialog(this);
+
+            if (option == JFileChooser.APPROVE_OPTION) {
+                String path = chooser.getSelectedFile().getAbsolutePath();
+
+                util.ExcelGenerator.generateInvoices(invoices, path);
+
+                JOptionPane.showMessageDialog(this, "Excel gerado com sucesso!");
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private JButton createDangerButton(String text) {

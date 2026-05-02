@@ -29,7 +29,7 @@ public class ClientFrame extends JFrame {
 
     public ClientFrame() {
         setTitle("Sistema At Promo - Clientes / Indústrias");
-        setSize(980, 620);
+        setSize(1000, 620);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setResizable(false);
@@ -160,18 +160,24 @@ public class ClientFrame extends JFrame {
     }
 
     private void createActionButtons(JPanel panel) {
+
+        JButton btnExcel = createPrimaryButton("Exportar Excel");
+        btnExcel.setBounds(470, 525, 150, 36);
+        btnExcel.addActionListener(e -> exportExcel());
+        panel.add(btnExcel);
+
         JButton btnActivate = createPrimaryButton("Ativar");
-        btnActivate.setBounds(600, 525, 100, 36);
+        btnActivate.setBounds(630, 525, 100, 36);
         btnActivate.addActionListener(e -> activateClient());
         panel.add(btnActivate);
 
         JButton btnDeactivate = createDangerButton("Inativar");
-        btnDeactivate.setBounds(715, 525, 100, 36);
+        btnDeactivate.setBounds(745, 525, 100, 36);
         btnDeactivate.addActionListener(e -> deactivateClient());
         panel.add(btnDeactivate);
 
         JButton btnClose = createDarkButton("Fechar");
-        btnClose.setBounds(830, 525, 110, 36);
+        btnClose.setBounds(860, 525, 110, 36);
         btnClose.addActionListener(e -> dispose());
         panel.add(btnClose);
     }
@@ -307,6 +313,55 @@ public class ClientFrame extends JFrame {
             });
         }
     }
+
+    private void exportExcel() {
+        try {
+            List<Client> clients = getCurrentTableClients();
+
+            if (clients.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Nenhum cliente para exportar.");
+                return;
+            }
+
+            JFileChooser chooser = new JFileChooser();
+            chooser.setSelectedFile(new java.io.File("clientes_industrias.xlsx"));
+
+            int option = chooser.showSaveDialog(this);
+
+            if (option == JFileChooser.APPROVE_OPTION) {
+                String path = chooser.getSelectedFile().getAbsolutePath();
+
+                if (!path.toLowerCase().endsWith(".xlsx")) {
+                    path += ".xlsx";
+                }
+
+                util.ExcelGenerator.generateClients(clients, path);
+
+                JOptionPane.showMessageDialog(this, "Excel de clientes gerado com sucesso.");
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private List<Client> getCurrentTableClients() {
+        String search = txtSearch.getText().trim().toLowerCase();
+        String status = cbStatusFilter.getSelectedItem().toString();
+        String company = cbCompanyFilter.getSelectedItem().toString();
+
+        List<Client> clients = clientController.listAll();
+
+        return clients.stream()
+                .filter(c -> search.isEmpty() || c.getName().toLowerCase().contains(search))
+                .filter(c -> status.equals("Todos")
+                        || (status.equals("Ativos") && c.isActive())
+                        || (status.equals("Inativos") && !c.isActive()))
+                .filter(c -> company.equals("Todos") || company.equals(c.getCompanyLink()))
+                .toList();
+    }
+
+
 
     private JButton createPrimaryButton(String text) {
         JButton button = new JButton(text);
